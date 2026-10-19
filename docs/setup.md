@@ -14,6 +14,14 @@ indica il requisito mancante.
 
 ## Creare la copia
 
+Aprire `Avvia TableCraft.command`: al primo avvio esegue automaticamente il setup
+usando `/Applications/TablePlus.app`, poi avvia la copia. Il file ZIP di GitHub
+contiene gli script, non l'applicazione preparata. Restano necessari tutti i
+requisiti elencati sopra. In caso di errore, risolvere il requisito indicato e
+riaprire il launcher.
+
+Per eseguire i due passaggi manualmente, dal Terminale nella cartella scaricata:
+
 ```sh
 ./scripts/setup_tablecraft.sh
 ./"Avvia TableCraft.command"

@@ -59,6 +59,10 @@ then download or clone this repository and run:
 ./"Avvia TableCraft.command"
 ```
 
+You can also open `Avvia TableCraft.command` directly: on first launch it runs
+setup automatically, provided the requirements above are installed. The GitHub
+ZIP does not include the prepared application.
+
 Setup checks the source version and hash, preserves the original installation,
 refuses to overwrite an existing local copy and signs the copy ad hoc.
 Automatic updates are disabled on the customized copy.

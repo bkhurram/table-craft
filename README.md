@@ -95,6 +95,10 @@ versione o hash non corrispondono. Non scarica l'applicazione.
    ./"Avvia TableCraft.command"
    ```
 
+È possibile anche aprire direttamente `Avvia TableCraft.command`: al primo avvio
+esegue automaticamente il setup, se sono presenti i requisiti indicati sopra.
+Il file ZIP di GitHub non include l'applicazione preparata.
+
 Il setup conserva l'installazione originale e non sovrascrive una copia locale
 già esistente. La copia usa una firma ad hoc, distinta dalla firma Developer ID
 originale. Gli aggiornamenti automatici della copia sono disabilitati.

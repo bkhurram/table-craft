@@ -3,8 +3,15 @@ set -euo pipefail
 task_root=${0:A:h}
 research_bundle="$task_root/analysis/copies/TablePlus-Research.app"
 research_profile="$task_root/analysis/runtime-profile"
+if [[ ! -x "$research_bundle/Contents/MacOS/TablePlus" ]]; then
+    print 'First launch: preparing TableCraft from /Applications/TablePlus.app…'
+    /bin/zsh "$task_root/scripts/setup_tablecraft.sh" || {
+        print -u2 'Setup failed. Resolve the requirement shown above, then open this launcher again.'
+        exit 1
+    }
+fi
 [[ -x "$research_bundle/Contents/MacOS/TablePlus" ]] || {
-    print -u2 'TableCraft has not been prepared. Run ./scripts/setup_tablecraft.sh first.'
+    print -u2 'Setup did not create a runnable application.'
     exit 1
 }
 mkdir -p "$research_profile"
