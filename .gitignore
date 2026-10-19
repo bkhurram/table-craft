@@ -1,0 +1,37 @@
+# Local application, profiles and analysis evidence
+/analysis/
+*.app/
+*.dmg
+*.pkg
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.tableplusconnection
+Connections.plist*
+ConnectionGroups.plist*
+*.keychain*
+*.pem
+*.key
+.env
+.env.*
+
+# Vendor resources, reference collage and generated intermediates
+/assets/icons/backup/
+/assets/icons/*.iconset/
+/assets/icons/reference-craft.png
+/assets/icons/macos-resolved-icon.png
+/assets/icons/branding*.json
+/Avvia TablePlus Research.command
+
+# Development and OS files
+.venv*/
+__pycache__/
+*.py[cod]
+.DS_Store
+._*
+.idea/
+.vscode/
+dist/
+build/
+*.log

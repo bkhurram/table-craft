@@ -1,0 +1,2 @@
+# Optional: only scripts/find_feature_controls.py needs this dependency.
+capstone==5.0.9
