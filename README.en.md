@@ -40,7 +40,8 @@ is unlocked. The default setup applies branding; research control changes are op
 | Component | Status |
 |---|---|
 | macOS / Apple Silicon | Tested on macOS **27.0.1**, build **26A434**, ARM64 |
-| TablePlus source | **27.0.2**, build **818**, exact executable SHA-256 required |
+| TablePlus source | **27.0.2 (818)** tested locally; other builds accepted for branding when resource checks pass, with runtime verification required on the destination Mac |
+| Local-control changes | Only **27.0.2 (818)**, exact executable SHA-256 required |
 | macOS 12+ | Minimum declared by the source bundle; other OS versions not tested |
 | Intel / Rosetta | Original slice exists; local-control changes and runtime not verified |
 | Windows, Linux, web | No implementation in this repository |
@@ -50,7 +51,7 @@ is unlocked. The default setup applies branding; research control changes are op
 
 ## Get started
 
-Install the supported TablePlus version separately at `/Applications/TablePlus.app`,
+Install TablePlus separately at `/Applications/TablePlus.app`,
 then download or clone this repository and run:
 
 ```sh
@@ -63,7 +64,9 @@ You can also open `Avvia TableCraft.command` directly: on first launch it runs
 setup automatically, provided the requirements above are installed. The GitHub
 ZIP does not include the prepared application.
 
-Setup checks the source version and hash, preserves the original installation,
+Default setup checks branding resources across builds. Exact source version and
+hash are required for `--local-controls`. Build 802 has not been tested end-to-end here.
+Setup preserves the original installation,
 refuses to overwrite an existing local copy and signs the copy ad hoc.
 Automatic updates are disabled on the customized copy.
 

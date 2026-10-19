@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Branding su più build con verifica delle risorse prima della copia; versione e hash esatti richiesti solo per le modifiche ai controlli locali.
 - Setup compatibile con Python 3.9+, selezione esplicita dell'interprete e messaggi sui requisiti mancanti.
 - Preparazione temporanea con pulizia in caso di errore e controllo della firma prima dell'avvio.
 - Firma con conservazione degli entitlement e uso dell'icona ICNS già inclusa.

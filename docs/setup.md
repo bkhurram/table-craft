@@ -6,9 +6,13 @@
 - Python 3.9 o successivo. È compatibile anche Python 3.9.6 fornito dagli
   strumenti sviluppatore Apple; non è necessario installare Python 3.11.
 - Strumenti macOS `codesign`, `ditto`, `plutil` e `PlistBuddy`.
-- TablePlus 27.0.2 (818) installato separatamente.
-- SHA-256 dell'eseguibile supportato:
+- TablePlus installato separatamente. Il setup predefinito controlla la
+  compatibilità dei NIB e delle stringhe di branding prima di copiare l'app.
+- Il campione verificato end-to-end è TablePlus 27.0.2 (818), con SHA-256:
   `4547216d88fcd2868e48f31a2079da27850ace793ae79cc0fb7963d9c827c05a`.
+  Questo hash e questa versione sono obbligatori solo per `--local-controls`.
+  La versione 26.10.22 (802) può usare il setup predefinito se le sue risorse
+  superano i controlli; il suo avvio non è stato verificato qui.
 
 `./scripts/setup_tablecraft.sh --check` esegue i controlli senza creare la copia.
 Se manca Python o uno degli strumenti richiesti, il controllo si interrompe e
@@ -58,8 +62,11 @@ dipendere dall'estrazione XML.
 
 Se una vecchia versione del setup ha lasciato una copia incompleta, spostare
 altrove soltanto `analysis/copies/TablePlus-Research.app` e riaprire il launcher.
-Conservare `analysis/runtime-profile`. Per un errore di versione o hash sorgente,
-serve esattamente TablePlus 27.0.2 (818); altre versioni non vengono accettate.
+Conservare `analysis/runtime-profile`. Un errore di versione o hash con
+`--local-controls` richiede esattamente TablePlus 27.0.2 (818). Per applicare
+soltanto nome e icona alle altre build, usare il setup senza tale opzione.
+Se il controllo delle risorse fallisce, il formato non è gestito dal rebranding
+attuale: la procedura si interrompe prima di creare o modificare l'app.
 
 La cartella `analysis/runtime-profile/` contiene i dati del profilo separato.
 Il launcher imposta `CFFIXED_USER_HOME` per questo processo. Non importare profili

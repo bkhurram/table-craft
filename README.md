@@ -62,7 +62,8 @@ eseguibile preciso; non attestano lo sblocco di ogni funzione Premium.
 | Componente | Stato |
 |---|---|
 | macOS su Apple Silicon, ARM64 | Verificato su macOS **27.0.1**, build **26A434** |
-| Versione TablePlus | **27.0.2**, build **818**; eseguibile verificato tramite SHA-256 |
+| Versione TablePlus | **27.0.2**, build **818**, verificata localmente; altre build ammesse per il branding se superano il controllo delle risorse, con avvio da verificare sul Mac di destinazione |
+| Modifiche ai controlli locali | Solo **27.0.2 (818)**, con SHA-256 esatto |
 | macOS 12 e successivi | Minimo dichiarato dal bundle di base; le altre versioni non sono state provate |
 | Mac Intel / Rosetta | Slice presente nell'app originale; modifiche ai controlli locali e runtime non verificati |
 | Windows, Linux e web | Nessuna implementazione in questo repository |
@@ -73,8 +74,9 @@ eseguibile preciso; non attestano lo sblocco di ogni funzione Premium.
 ## Installazione
 
 Occorre avere TablePlus installato separatamente in `/Applications/TablePlus.app`.
-La procedura supporta il campione indicato nella tabella e si interrompe se
-versione o hash non corrispondono. Non scarica l'applicazione.
+Il setup predefinito verifica le risorse necessarie per nome e icona anche su
+altre build. Il vincolo di versione e hash esatti riguarda `--local-controls`.
+Non scarica l'applicazione. La build 802 non è stata provata end-to-end qui.
 
 1. Scarica o clona questo repository e apri la sua cartella nel Terminale.
 2. Controlla l'ambiente senza creare o modificare la copia:

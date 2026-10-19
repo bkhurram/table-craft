@@ -33,30 +33,45 @@ for asset in elephant-craft.png ElephantCraft.icns; do
         exit 1
     }
 done
-"$TABLECRAFT_PYTHON" - "$source_app" <<'PY'
+"$TABLECRAFT_PYTHON" - "$source_app" "$local_controls" "$task_root/scripts" <<'PY'
 import hashlib, plistlib, subprocess, sys
 from pathlib import Path
 app = Path(sys.argv[1])
+local_controls = sys.argv[2] == '1'
+sys.path.insert(0, sys.argv[3])
+from rebrand_tablecraft import validate_source
 if not (app/'Contents/Info.plist').is_file():
-    raise SystemExit('Source application was not found. Install TablePlus 27.0.2 (818) in /Applications, or use --source /path/TablePlus.app.')
+    raise SystemExit('Source application was not found. Install TablePlus in /Applications, or use --source /path/TablePlus.app.')
 info = plistlib.loads((app/'Contents/Info.plist').read_bytes())
+if info.get('CFBundleIdentifier') != 'com.tinyapp.TablePlus' or info.get('CFBundleExecutable') != 'TablePlus':
+    raise SystemExit('The source is not an original TablePlus application bundle.')
 minimum = info.get('LSMinimumSystemVersionByArchitecture', {}).get('arm64', info.get('LSMinimumSystemVersion', '0'))
 current = subprocess.check_output(['/usr/bin/sw_vers', '-productVersion'], text=True).strip()
 def version(value):
     return tuple((list(map(int, value.split('.'))) + [0, 0, 0])[:3])
 if version(current) < version(minimum):
     raise SystemExit('This application requires macOS {} or later; found {}.'.format(minimum, current))
-if (info.get('CFBundleShortVersionString'), info.get('CFBundleVersion')) != ('27.0.2','818'):
-    raise SystemExit('Found TablePlus {} ({}). Supported source: 27.0.2 (818). No files were changed.'.format(
+if local_controls and (info.get('CFBundleShortVersionString'), info.get('CFBundleVersion')) != ('27.0.2','818'):
+    raise SystemExit('Found TablePlus {} ({}). --local-controls requires exactly 27.0.2 (818). Use the default setup for branding. No files were changed.'.format(
         info.get('CFBundleShortVersionString', 'unknown'), info.get('CFBundleVersion', 'unknown')))
 with (app/'Contents/MacOS/TablePlus').open('rb') as handle:
     checksum = hashlib.sha256()
     for chunk in iter(lambda: handle.read(1024 * 1024), b''):
         checksum.update(chunk)
     digest = checksum.hexdigest()
-if digest != '4547216d88fcd2868e48f31a2079da27850ace793ae79cc0fb7963d9c827c05a':
+if local_controls and digest != '4547216d88fcd2868e48f31a2079da27850ace793ae79cc0fb7963d9c827c05a':
     raise SystemExit('Source executable hash does not match the supported sample. No files were changed.')
-print('Source version and SHA-256 verified.')
+try:
+    validate_source(app)
+except (OSError, ValueError, AssertionError, IndexError, KeyError, UnicodeError, subprocess.CalledProcessError) as error:
+    raise SystemExit('Unsupported branding resources: {}. No files were changed.'.format(error))
+print('Branding resources verified for TablePlus {} ({}).'.format(
+    info.get('CFBundleShortVersionString', 'unknown'), info.get('CFBundleVersion', 'unknown')))
+print('Source SHA-256: ' + digest)
+if local_controls:
+    print('Exact source version and SHA-256 verified for local controls.')
+else:
+    print('Branding setup: application code and license controls are unchanged. Other source builds require runtime verification on your Mac.')
 PY
 if (( check_only )); then
     print 'Preflight passed. Check-only mode did not create or modify an application.'

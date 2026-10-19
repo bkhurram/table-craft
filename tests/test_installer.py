@@ -11,6 +11,8 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT/'scripts'))
+from rebrand_tablecraft import Nib, var
 SOURCE_HASH = '4547216d88fcd2868e48f31a2079da27850ace793ae79cc0fb7963d9c827c05a'
 
 
@@ -39,8 +41,21 @@ class InstallerTests(unittest.TestCase):
         self.digest = hashlib.sha256(self.binary.read_bytes()).hexdigest()
         (self.source/'Contents/Info.plist').write_bytes(plistlib.dumps({
             'CFBundleShortVersionString': '27.0.2', 'CFBundleVersion': '818',
-            'CFBundleName': 'TablePlus',
+            'CFBundleName': 'TablePlus', 'CFBundleIdentifier': 'com.tinyapp.TablePlus',
+            'CFBundleExecutable': 'TablePlus',
         }))
+        resources = self.source/'Contents/Resources'
+        (resources/'Base.lproj').mkdir(parents=True)
+        # Synthetic archive exercising the localized-string path; no vendor data.
+        nib = object.__new__(Nib)
+        nib.header = [1, 0, 0, 0, 3, 0, 0, 0, 0, 0]
+        nib.keys_raw = b''.join(var(len(k)) + k for k in (b'NSKey', b'NSDev', b'NS.bytes'))
+        nib.classes_raw = b''
+        nib.objects = [(0, 0, 3)]
+        nib.values = [(0, 8, b'label'), (1, 8, b''), (2, 8, b'TablePlus')]
+        for relative in ('Base.lproj/Welcome.nib', 'AboutWindow.nib'):
+            (resources/relative).write_bytes(nib.encode())
+        (resources/'AppIcon.icns').write_bytes(b'fixture')
         # Pin the test copy to the fixture, leaving the shipped verifier unchanged.
         (scripts/'setup_tablecraft.sh').write_text(
             (ROOT/'scripts/setup_tablecraft.sh').read_text().replace(SOURCE_HASH, self.digest))
@@ -48,8 +63,7 @@ class InstallerTests(unittest.TestCase):
         assets.mkdir(parents=True)
         for name in ('elephant-craft.png', 'ElephantCraft.icns'):
             (assets/name).write_bytes(b'fixture')
-        (scripts/'rebrand_tablecraft.py').write_text(
-            "import os, pathlib\nassert pathlib.Path(os.environ['TABLECRAFT_BUNDLE']).is_dir()\n")
+        shutil.copy2(ROOT/'scripts/rebrand_tablecraft.py', scripts/'rebrand_tablecraft.py')
         (scripts/'install_craft_icon.sh').write_text(
             '#!/bin/zsh\n[[ ${TABLECRAFT_TEST_FAIL:-0} != 1 ]] || exit 42\n'
             'touch "$TABLECRAFT_BUNDLE/signed-fixture"\n')
@@ -105,9 +119,36 @@ class InstallerTests(unittest.TestCase):
 
     def test_hash_mismatch_stops_before_copying(self):
         self.binary.write_text('changed source')
-        result = self.run_setup()
+        result = self.run_setup('--local-controls')
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('hash does not match', result.stderr)
+        self.assertFalse((self.root/'analysis').exists())
+
+    def test_802_branding_uses_resource_checks_without_818_hash(self):
+        info_path = self.source/'Contents/Info.plist'
+        info = plistlib.loads(info_path.read_bytes())
+        info.update(CFBundleShortVersionString='26.10.22', CFBundleVersion='802')
+        info_path.write_bytes(plistlib.dumps(info))
+        self.binary.write_text('different source build')
+        source_bytes = self.binary.read_bytes()
+        result = self.run_setup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('26.10.22 (802)', result.stdout)
+        bundle = self.root/'analysis/copies/TablePlus-Research.app'
+        output = plistlib.loads((bundle/'Contents/Info.plist').read_bytes())
+        self.assertEqual(output['CFBundleName'], 'TableCraft')
+        self.assertEqual((bundle/'Contents/MacOS/TablePlus').read_bytes(), source_bytes)
+        self.assertEqual(self.binary.read_bytes(), source_bytes)
+        self.assertEqual(info_path.read_bytes(), plistlib.dumps(info))
+        rejected = self.run_setup('--check', '--local-controls')
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn('--local-controls requires exactly 27.0.2 (818)', rejected.stderr)
+
+    def test_incompatible_branding_resources_stop_before_copying(self):
+        (self.source/'Contents/Resources/AboutWindow.nib').write_bytes(b'unsupported format')
+        result = self.run_setup()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Unsupported branding resources', result.stderr)
         self.assertFalse((self.root/'analysis').exists())
 
     def test_missing_asset_reports_incomplete_download(self):

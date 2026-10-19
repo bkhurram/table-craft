@@ -12,6 +12,7 @@ BUNDLE = Path(os.environ.get('TABLECRAFT_BUNDLE', ROOT / 'analysis/copies/TableP
 RESOURCES = BUNDLE / 'Contents/Resources'
 BACKUP = ROOT / 'assets/icons/backup/branding'
 SIZES = {0: 1, 1: 2, 2: 4, 3: 8, 6: 4, 7: 8, 10: 4}
+BRANDING_NIBS = ('Base.lproj/Welcome.nib', 'AboutWindow.nib')
 
 
 def read_var(data, offset):
@@ -124,6 +125,34 @@ class Nib:
         return changes
 
 
+def validate_source(bundle):
+    """Check resource compatibility without writing to the source application."""
+    resources = bundle / 'Contents/Resources'
+    if not (resources/'AppIcon.icns').is_file():
+        raise ValueError('AppIcon.icns is missing')
+    for relative in BRANDING_NIBS:
+        source = (resources/relative).read_bytes()
+        try:
+            nib = Nib(source)
+            if nib.encode() != source:
+                raise ValueError('archive does not round-trip')
+            if not nib.rebrand():
+                raise ValueError('no recognized branding references')
+            encoded = nib.encode()
+            if Nib(encoded).encode() != encoded:
+                raise ValueError('archive cannot be safely rewritten')
+        except (AssertionError, IndexError, KeyError, UnicodeError, struct.error) as error:
+            raise ValueError('{}: unsupported NIB archive ({})'.format(relative, type(error).__name__)) from error
+        except ValueError as error:
+            raise ValueError('{}: {}'.format(relative, error)) from error
+    for pattern in ('*.lproj/Welcome.strings', '*.lproj/Localizable.strings'):
+        for path in resources.glob(pattern):
+            import subprocess
+            entries = plistlib.loads(subprocess.check_output(['plutil', '-convert', 'xml1', '-o', '-', str(path)]))
+            if not isinstance(entries, dict) or any(not isinstance(k, str) or not isinstance(v, str) for k, v in entries.items()):
+                raise ValueError('{} is not a string dictionary'.format(path.name))
+
+
 def backup(path):
     dest = BACKUP / path.relative_to(BUNDLE)
     if not dest.exists():
@@ -133,7 +162,7 @@ def backup(path):
 
 def main():
     changes = {}
-    for relative in ['Base.lproj/Welcome.nib','AboutWindow.nib']:
+    for relative in BRANDING_NIBS:
         path = RESOURCES / relative
         source = path.read_bytes()
         nib = Nib(source)
