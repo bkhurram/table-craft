@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Rebrand visible NIB strings without renaming Swift modules or user-data domains."""
 import json
+import os
 import plistlib
 import shutil
 import struct
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-BUNDLE = ROOT / 'analysis/copies/TablePlus-Research.app'
+BUNDLE = Path(os.environ.get('TABLECRAFT_BUNDLE', ROOT / 'analysis/copies/TablePlus-Research.app'))
 RESOURCES = BUNDLE / 'Contents/Resources'
 BACKUP = ROOT / 'assets/icons/backup/branding'
 SIZES = {0: 1, 1: 2, 2: 4, 3: 8, 6: 4, 7: 8, 10: 4}

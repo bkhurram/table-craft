@@ -7,7 +7,9 @@ dell'app sorgente e usare dati sintetici per le prove.
 ## Verifiche locali
 
 ```sh
-python3 -m compileall -q scripts
+python3 -m compileall -q scripts tests
+python3 -m unittest discover -s tests -v
+zsh -n scripts/python_runtime.sh
 zsh -n scripts/setup_tablecraft.sh
 zsh -n scripts/install_craft_icon.sh
 zsh -n "Avvia TableCraft.command"

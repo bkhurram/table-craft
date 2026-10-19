@@ -68,7 +68,7 @@ eseguibile preciso; non attestano lo sblocco di ogni funzione Premium.
 | Windows, Linux e web | Nessuna implementazione in questo repository |
 | Database | SQLite verificato; gli altri adattatori del bundle non sono stati provati end-to-end |
 | AI, MCP e servizi online | Componenti individuati; integrazioni e autorizzazioni lato server non verificate |
-| Strumenti | Python **3.11+**, zsh e strumenti sviluppatore Apple |
+| Strumenti | Python **3.9+**, zsh e strumenti macOS di copia/firma; strumenti sviluppatore Apple per l'analisi opzionale |
 
 ## Installazione
 

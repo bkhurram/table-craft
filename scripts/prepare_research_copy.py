@@ -1,13 +1,14 @@
 """Apply version-pinned ARM64 changes only to the separate research bundle."""
 import hashlib
 import json
+import os
 import plistlib
 import struct
 from pathlib import Path
 from macho_inspect import MachO
 
 ROOT = Path(__file__).resolve().parent.parent
-bundle = ROOT / 'analysis/copies/TablePlus-Research.app'
+bundle = Path(os.environ.get('TABLECRAFT_BUNDLE', ROOT / 'analysis/copies/TablePlus-Research.app'))
 binary = bundle / 'Contents/MacOS/TablePlus'
 expected = '4547216d88fcd2868e48f31a2079da27850ace793ae79cc0fb7963d9c827c05a'
 assert binary.resolve() != Path('/Applications/TablePlus.app/Contents/MacOS/TablePlus').resolve()

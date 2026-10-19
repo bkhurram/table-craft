@@ -14,11 +14,21 @@ fi
     print -u2 'Setup did not create a runnable application.'
     exit 1
 }
+if [[ $(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$research_bundle/Contents/Info.plist" 2>/dev/null) != TableCraft ]] \
+    || ! /usr/bin/codesign --verify --deep --strict "$research_bundle"; then
+    print -u2 "The local application is incomplete or its signature is invalid: $research_bundle"
+    print -u2 'Move that bundle aside and reopen the launcher to prepare a new copy. Keep analysis/runtime-profile.'
+    exit 1
+fi
 mkdir -p "$research_profile"
 export CFFIXED_USER_HOME="$research_profile"
 if [[ ${1:-} == --offline ]]; then
     shift
-    [[ -f "$research_profile/research.sb" ]] || python3 "$task_root/scripts/write_sandbox_profile.py"
+    if [[ ! -f "$research_profile/research.sb" ]]; then
+        source "$task_root/scripts/python_runtime.sh"
+        tablecraft_select_python
+        "$TABLECRAFT_PYTHON" "$task_root/scripts/write_sandbox_profile.py"
+    fi
     exec /usr/bin/sandbox-exec -f "$research_profile/research.sb" \
         "$research_bundle/Contents/MacOS/TablePlus" \
         -ApplePersistenceIgnoreState YES -SUEnableAutomaticChecks NO -SUAutomaticallyUpdate NO "$@"

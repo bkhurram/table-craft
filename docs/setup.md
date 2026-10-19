@@ -3,7 +3,9 @@
 ## Requisiti
 
 - Mac Apple Silicon, avviato nativamente in ARM64.
-- Python 3.11 o successivo e strumenti sviluppatore Apple.
+- Python 3.9 o successivo. È compatibile anche Python 3.9.6 fornito dagli
+  strumenti sviluppatore Apple; non è necessario installare Python 3.11.
+- Strumenti macOS `codesign`, `ditto`, `plutil` e `PlistBuddy`.
 - TablePlus 27.0.2 (818) installato separatamente.
 - SHA-256 dell'eseguibile supportato:
   `4547216d88fcd2868e48f31a2079da27850ace793ae79cc0fb7963d9c827c05a`.
@@ -11,6 +13,18 @@
 `./scripts/setup_tablecraft.sh --check` esegue i controlli senza creare la copia.
 Se manca Python o uno degli strumenti richiesti, il controllo si interrompe e
 indica il requisito mancante.
+
+Il setup cerca Python nel `PATH`, nei percorsi standard Homebrew, nel framework
+Python e in `/usr/bin/python3`. Per scegliere un interprete specifico:
+
+```sh
+TABLECRAFT_PYTHON=/usr/bin/python3 /bin/zsh scripts/setup_tablecraft.sh --check
+```
+
+Se non è disponibile alcun Python compatibile, installare Python 3 da
+[python.org](https://www.python.org/downloads/macos/) e riprovare. Gli strumenti
+di analisi statica opzionali richiedono separatamente gli strumenti sviluppatore
+Apple; il setup predefinito non usa `xcrun` e non rigenera l'icona ICNS già inclusa.
 
 ## Creare la copia
 
@@ -36,6 +50,16 @@ Un percorso sorgente diverso può essere specificato con:
 Il setup crea `analysis/copies/TablePlus-Research.app`. Il percorso tecnico
 mantiene il nome storico; nome visibile, schermata iniziale e menu usano
 TableCraft. L'identificatore è `com.tinyapp.TablePlus.Research`.
+
+La copia viene preparata in una cartella temporanea e resa disponibile solo
+dopo la verifica della firma. Un errore pulisce la copia temporanea e permette
+di riprovare. Gli entitlement vengono conservati dalla firma esistente senza
+dipendere dall'estrazione XML.
+
+Se una vecchia versione del setup ha lasciato una copia incompleta, spostare
+altrove soltanto `analysis/copies/TablePlus-Research.app` e riaprire il launcher.
+Conservare `analysis/runtime-profile`. Per un errore di versione o hash sorgente,
+serve esattamente TablePlus 27.0.2 (818); altre versioni non vengono accettate.
 
 La cartella `analysis/runtime-profile/` contiene i dati del profilo separato.
 Il launcher imposta `CFFIXED_USER_HOME` per questo processo. Non importare profili

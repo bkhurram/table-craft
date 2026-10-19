@@ -20,22 +20,40 @@ done
 [[ $(uname -s) == Darwin && $(uname -m) == arm64 ]] || {
     print -u2 'Setup requires macOS running natively on Apple Silicon.'; exit 1
 }
-for tool in python3 codesign ditto sips iconutil plutil xcrun; do
+source "$task_root/scripts/python_runtime.sh"
+tablecraft_select_python
+print "Using Python: $TABLECRAFT_PYTHON ($("$TABLECRAFT_PYTHON" --version 2>&1))"
+for tool in codesign ditto plutil; do
     command -v "$tool" >/dev/null || { print -u2 "Missing tool: $tool"; exit 1; }
 done
-python3 - "$source_app" <<'PY'
-import hashlib, plistlib, sys
+[[ -x /usr/libexec/PlistBuddy ]] || { print -u2 'Missing tool: /usr/libexec/PlistBuddy'; exit 1; }
+for asset in elephant-craft.png ElephantCraft.icns; do
+    [[ -s "$task_root/assets/icons/$asset" ]] || {
+        print -u2 "Missing asset: assets/icons/$asset. Download the complete repository ZIP again."
+        exit 1
+    }
+done
+"$TABLECRAFT_PYTHON" - "$source_app" <<'PY'
+import hashlib, plistlib, subprocess, sys
 from pathlib import Path
-if sys.version_info < (3, 11):
-    raise SystemExit('Python 3.11 or later is required.')
 app = Path(sys.argv[1])
 if not (app/'Contents/Info.plist').is_file():
-    raise SystemExit('Source application was not found.')
+    raise SystemExit('Source application was not found. Install TablePlus 27.0.2 (818) in /Applications, or use --source /path/TablePlus.app.')
 info = plistlib.loads((app/'Contents/Info.plist').read_bytes())
+minimum = info.get('LSMinimumSystemVersionByArchitecture', {}).get('arm64', info.get('LSMinimumSystemVersion', '0'))
+current = subprocess.check_output(['/usr/bin/sw_vers', '-productVersion'], text=True).strip()
+def version(value):
+    return tuple((list(map(int, value.split('.'))) + [0, 0, 0])[:3])
+if version(current) < version(minimum):
+    raise SystemExit('This application requires macOS {} or later; found {}.'.format(minimum, current))
 if (info.get('CFBundleShortVersionString'), info.get('CFBundleVersion')) != ('27.0.2','818'):
-    raise SystemExit('Supported source: TablePlus 27.0.2 (818). No files were changed.')
+    raise SystemExit('Found TablePlus {} ({}). Supported source: 27.0.2 (818). No files were changed.'.format(
+        info.get('CFBundleShortVersionString', 'unknown'), info.get('CFBundleVersion', 'unknown')))
 with (app/'Contents/MacOS/TablePlus').open('rb') as handle:
-    digest = hashlib.file_digest(handle, 'sha256').hexdigest()
+    checksum = hashlib.sha256()
+    for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+        checksum.update(chunk)
+    digest = checksum.hexdigest()
 if digest != '4547216d88fcd2868e48f31a2079da27850ace793ae79cc0fb7963d9c827c05a':
     raise SystemExit('Source executable hash does not match the supported sample. No files were changed.')
 print('Source version and SHA-256 verified.')
@@ -46,16 +64,34 @@ if (( check_only )); then
 fi
 research_bundle="$task_root/analysis/copies/TablePlus-Research.app"
 [[ ! -e "$research_bundle" ]] || {
-    print -u2 'A local copy already exists. Keep it and its profile; setup will not overwrite it.'; exit 1
+    print -u2 "A local copy already exists at: $research_bundle"
+    print -u2 'Setup will not overwrite it. If an older setup failed, move that bundle aside and retry; keep analysis/runtime-profile.'
+    exit 1
 }
 mkdir -p "$task_root/analysis/copies" "$task_root/analysis/evidence/feature-controls"
-codesign -d --entitlements :- "$source_app" > "$task_root/analysis/evidence/entitlements.plist"
-plutil -lint "$task_root/analysis/evidence/entitlements.plist" >/dev/null
-ditto "$source_app" "$research_bundle"
+setup_lock="$task_root/analysis/copies/.setup-lock"
+mkdir "$setup_lock" 2>/dev/null || {
+    print -u2 "Another setup may be running. If it has stopped, remove this empty lock directory: $setup_lock"
+    exit 1
+}
+staging_dir=''
+cleanup() {
+    local result=$?
+    [[ -z "$staging_dir" ]] || rm -rf -- "$staging_dir"
+    rmdir "$setup_lock"
+    return "$result"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM HUP
+staging_dir=$(mktemp -d "$task_root/analysis/copies/.tablecraft-setup.XXXXXX")
+export TABLECRAFT_BUNDLE="$staging_dir/TablePlus-Research.app"
+print 'Copying the application and applying branding…'
+ditto "$source_app" "$TABLECRAFT_BUNDLE"
 if (( local_controls )); then
-    python3 "$task_root/scripts/prepare_research_copy.py"
+    "$TABLECRAFT_PYTHON" "$task_root/scripts/prepare_research_copy.py"
 fi
-python3 - "$research_bundle" <<'PY'
+"$TABLECRAFT_PYTHON" - "$TABLECRAFT_BUNDLE" <<'PY'
 import plistlib, sys
 from pathlib import Path
 p = Path(sys.argv[1])/'Contents/Info.plist'
@@ -65,7 +101,9 @@ for key in ('SUEnableAutomaticChecks','SUAutomaticallyUpdate','SUAllowsAutomatic
     info[key] = False
 p.write_bytes(plistlib.dumps(info))
 PY
-python3 "$task_root/scripts/rebrand_tablecraft.py"
-"$task_root/scripts/install_craft_icon.sh" "$task_root/assets/icons/elephant-craft.png"
-python3 "$task_root/scripts/write_sandbox_profile.py"
+"$TABLECRAFT_PYTHON" "$task_root/scripts/rebrand_tablecraft.py"
+/bin/zsh "$task_root/scripts/install_craft_icon.sh" "$task_root/assets/icons/elephant-craft.png"
+"$TABLECRAFT_PYTHON" "$task_root/scripts/write_sandbox_profile.py"
+[[ ! -e "$research_bundle" ]] || { print -u2 'A local copy appeared during setup; it will not be overwritten.'; exit 1; }
+mv "$TABLECRAFT_BUNDLE" "$research_bundle"
 print 'TableCraft is ready. Start it with ./"Avvia TableCraft.command".'

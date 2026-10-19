@@ -46,7 +46,7 @@ is unlocked. The default setup applies branding; research control changes are op
 | Windows, Linux, web | No implementation in this repository |
 | Databases | SQLite tested; other bundled adapters not verified end-to-end |
 | AI, MCP, online services | Components observed; integrations and server entitlements not verified |
-| Tools | Python **3.11+**, zsh and Apple developer tools |
+| Tools | Python **3.9+**, zsh and macOS copy/signing tools; Apple developer tools for optional analysis |
 
 ## Get started
 

@@ -77,7 +77,10 @@ def main():
                         '-o', 'image lookup -a 0x' + match.group(1),
                         '-o', 'disassemble --name ' + match.group(2)[1:]])
         with binary.open('rb') as handle:
-            digest = hashlib.file_digest(handle, 'sha256').hexdigest()
+            checksum = hashlib.sha256()
+            for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+                checksum.update(chunk)
+            digest = checksum.hexdigest()
         summary['binaries'].append({'path': str(binary), 'sha256': digest,
                                     'size': binary.stat().st_size, 'description': desc.strip(),
                                     'defined_objc_classes': len(classes),

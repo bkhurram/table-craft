@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Setup compatibile con Python 3.9+, selezione esplicita dell'interprete e messaggi sui requisiti mancanti.
+- Preparazione temporanea con pulizia in caso di errore e controllo della firma prima dell'avvio.
+- Firma con conservazione degli entitlement e uso dell'icona ICNS già inclusa.
 - Nome TableCraft nella schermata iniziale, nei menu e nella finestra Informazioni.
 - Icona dell'elefante in stile incisione e logo interno coordinato.
 - Setup locale con preflight di versione/hash, profilo separato e modalità offline.
