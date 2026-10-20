@@ -40,7 +40,7 @@ is unlocked. The default setup applies branding; research control changes are op
 | Component | Status |
 |---|---|
 | macOS / Apple Silicon | Tested on macOS **27.0.1**, build **26A434**, ARM64 |
-| TablePlus source | **27.0.2 (818)** tested locally; other builds accepted for branding when resource checks pass, with runtime verification required on the destination Mac |
+| TablePlus source | **27.0.2 (818)** and **27.1.0 (830)** supported by setup; 830 launch, profile and SQLite verified locally; see [report](docs/compatibility.md) |
 | Local-control changes | Only **27.0.2 (818)**, exact executable SHA-256 required |
 | macOS 12+ | Minimum declared by the source bundle; other OS versions not tested |
 | Intel / Rosetta | Original slice exists; local-control changes and runtime not verified |
@@ -67,7 +67,7 @@ ZIP does not include the prepared application.
 Default setup checks branding resources across builds. Exact source version and
 hash are required for `--local-controls`. Build 802 has not been tested end-to-end here.
 Setup preserves the original installation,
-refuses to overwrite an existing local copy and signs the copy ad hoc.
+refuses to overwrite an existing local copy without `--update` and signs the copy ad hoc.
 Automatic updates are disabled on the customized copy.
 
 See [setup notes](docs/setup.md) for research options, offline mode and a synthetic
@@ -85,6 +85,13 @@ and the [changelog](CHANGELOG.md).
 
 ## Credits and license
 
+For the exact ARM64 **27.1.0 (830)** sample, `./scripts/setup_tablecraft.sh --update --workspace-limits` explicitly applies the local tab/workspace changes
+while preserving the previous bundle and backing up the profile. Close
+TableCraft first. Four SQL tabs and three simultaneous SQLite workspaces were
+verified offline with synthetic data. This option does not change license-state
+presentation or remote database permissions. A plain update restores the vendor
+controls. See [setup details](docs/setup.md#schede-e-workspace-sulla-build-830).
+
 Original repository code is [MIT licensed](LICENSE). This does not license
 TablePlus or its resources; see [NOTICE](NOTICE). The elephant was generated with
 ImageGen; provenance is documented in [branding notes](docs/branding.md).
@@ -93,3 +100,28 @@ README presentation was inspired by [PDFCraft](https://github.com/storytold/pdfc
 [awesome-reverse-engineering](https://github.com/morluto/awesome-reverse-engineering)
 provided the analysis-tool reference. TableCraft is independently maintained and
 is not affiliated with TablePlus, PDFCraft or ArtCraft.
+
+## Update compatibility and profile persistence
+
+Both TablePlus 27.0.2 (818) and 27.1.0 (830) are supported by the branding
+installer. The 830 bundle passed resource validation, signing, launch and a
+synthetic SQLite read/filter smoke test on this Mac. See the
+[compatibility report](docs/compatibility.md) for the limits of that evidence.
+The standalone AboutWindow.nib is absent in 830; it remains required for 818.
+
+Close TableCraft, then run `./scripts/setup_tablecraft.sh --update` and reopen
+the launcher. This rebuilds branding from the installed original, snapshots
+the profile, and retains the previous application in `analysis/copies/previous.*/`.
+The existing license-control patches are not migrated by this update.
+
+The launcher now uses a stable profile in
+`~/Library/Application Support/TableCraft/runtime-profile/`. On first use it
+copies the legacy checkout's `analysis/runtime-profile/` without deleting it.
+An existing stable profile always wins; profiles are never automatically merged.
+An absolute `TABLECRAFT_PROFILE` overrides the default. Backups are stored in
+`profile-backups/` beside the selected profile and contain private data.
+
+Premium access requires a valid vendor license and activation on the destination
+Mac. It is not granted by this installer. No second Mac was available for a
+runtime/activation test. Keychain passwords, external SSH keys and database
+files must be migrated separately through supported tools.

@@ -2,7 +2,10 @@
 set -euo pipefail
 task_root=${0:A:h}
 research_bundle="$task_root/analysis/copies/TablePlus-Research.app"
-research_profile="$task_root/analysis/runtime-profile"
+source "$task_root/scripts/python_runtime.sh"
+tablecraft_select_python
+research_profile=$("$TABLECRAFT_PYTHON" "$task_root/scripts/profile_manager.py" prepare)
+export TABLECRAFT_PROFILE="$research_profile"
 if [[ ! -x "$research_bundle/Contents/MacOS/TablePlus" ]]; then
     print 'First launch: preparing TableCraft from /Applications/TablePlus.app…'
     /bin/zsh "$task_root/scripts/setup_tablecraft.sh" || {
@@ -17,18 +20,14 @@ fi
 if [[ $(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$research_bundle/Contents/Info.plist" 2>/dev/null) != TableCraft ]] \
     || ! /usr/bin/codesign --verify --deep --strict "$research_bundle"; then
     print -u2 "The local application is incomplete or its signature is invalid: $research_bundle"
-    print -u2 'Move that bundle aside and reopen the launcher to prepare a new copy. Keep analysis/runtime-profile.'
+    print -u2 'Move that bundle aside and reopen the launcher to prepare a new copy. Keep the user profile; see docs/setup.md.'
     exit 1
 fi
 mkdir -p "$research_profile"
 export CFFIXED_USER_HOME="$research_profile"
 if [[ ${1:-} == --offline ]]; then
     shift
-    if [[ ! -f "$research_profile/research.sb" ]]; then
-        source "$task_root/scripts/python_runtime.sh"
-        tablecraft_select_python
-        "$TABLECRAFT_PYTHON" "$task_root/scripts/write_sandbox_profile.py"
-    fi
+    "$TABLECRAFT_PYTHON" "$task_root/scripts/write_sandbox_profile.py"
     exec /usr/bin/sandbox-exec -f "$research_profile/research.sb" \
         "$research_bundle/Contents/MacOS/TablePlus" \
         -ApplePersistenceIgnoreState YES -SUEnableAutomaticChecks NO -SUAutomaticallyUpdate NO "$@"

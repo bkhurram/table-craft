@@ -2,7 +2,9 @@
 
 ## Ambito
 
-La base analizzata è TablePlus 27.0.2 (818), bundle universale Intel/ARM64.
+La base storicamente analizzata è TablePlus 27.0.2 (818), bundle universale Intel/ARM64.
+Il setup supporta anche 27.1.0 (830), verificata il 20 ottobre 2026 per branding,
+firma, avvio, profilo e lettura SQLite: vedi [rapporto](compatibility.md).
 L'analisi dettagliata e le prove funzionali sono state eseguite sulla slice
 ARM64, su macOS 27.0.1 (26A434). Il minimo macOS 12.0 deriva dal plist del
 campione e non rappresenta una prova su tutte le versioni intermedie.
@@ -36,7 +38,10 @@ NIB condivisi con `IBModuleName` sono duplicati per conservare i nomi Swift.
 L'icona viene convertita in ICNS con gli strumenti nativi di macOS.
 
 Le modifiche sperimentali al codice richiedono l'hash esatto del campione e sono
-separate dal branding. I profili e le evidenze si generano localmente e non
+separate dal branding. Il profilo stabile risiede sotto `~/Library/Application Support/TableCraft/`,
+indipendente dal checkout; il launcher migra per copia il vecchio profilo locale.
+`--update` salva il profilo e conserva il bundle precedente.
+I profili e le evidenze si generano localmente e non
 fanno parte del contenuto Git.
 
 ## Limiti pratici

@@ -43,7 +43,7 @@ inclusi. Non è disponibile una build autonoma da compilare dal solo repository.
 
 - **Identità Craft:** elefante inciso nero/avorio su fondo corallo, icona macOS e logo interno coordinati.
 - **Interfaccia personalizzata:** nome TableCraft nella schermata iniziale, nei menu e nella finestra Informazioni.
-- **Profilo separato:** connessioni e impostazioni locali in `analysis/runtime-profile/`.
+- **Profilo separato:** connessioni e impostazioni in `~/Library/Application Support/TableCraft/runtime-profile/`, indipendenti dalla cartella del progetto.
 - **Workspace SQL:** query, schede, tabelle, filtri e Metrics Board dell'app di base.
 - **Analisi riproducibile:** inventario del bundle, dipendenze, metadati, hash e disassemblaggio LLDB.
 
@@ -62,8 +62,8 @@ eseguibile preciso; non attestano lo sblocco di ogni funzione Premium.
 | Componente | Stato |
 |---|---|
 | macOS su Apple Silicon, ARM64 | Verificato su macOS **27.0.1**, build **26A434** |
-| Versione TablePlus | **27.0.2**, build **818**, verificata localmente; altre build ammesse per il branding se superano il controllo delle risorse, con avvio da verificare sul Mac di destinazione |
-| Modifiche ai controlli locali | Solo **27.0.2 (818)**, con SHA-256 esatto |
+| Versione TablePlus | **27.0.2 (818)** e **27.1.0 (830)**: setup compatibile; avvio, profilo e SQLite verificati sulla 830. Vedi [rapporto](docs/compatibility.md) |
+| Modifiche ai controlli locali | **818**: campione storico; **830**: schede e workspace con `--workspace-limits`; SHA-256 esatto richiesto |
 | macOS 12 e successivi | Minimo dichiarato dal bundle di base; le altre versioni non sono state provate |
 | Mac Intel / Rosetta | Slice presente nell'app originale; modifiche ai controlli locali e runtime non verificati |
 | Windows, Linux e web | Nessuna implementazione in questo repository |
@@ -102,8 +102,28 @@ esegue automaticamente il setup, se sono presenti i requisiti indicati sopra.
 Il file ZIP di GitHub non include l'applicazione preparata.
 
 Il setup conserva l'installazione originale e non sovrascrive una copia locale
-già esistente. La copia usa una firma ad hoc, distinta dalla firma Developer ID
+già esistente senza `--update`. La copia usa una firma ad hoc, distinta dalla firma Developer ID
 originale. Gli aggiornamenti automatici della copia sono disabilitati.
+
+Per aggiornare la copia dopo un aggiornamento di TablePlus, chiudere TableCraft e usare:
+
+```sh
+./scripts/setup_tablecraft.sh --update
+./"Avvia TableCraft.command"
+```
+
+L'aggiornamento salva il profilo, conserva il bundle precedente e usa la stessa
+identità dei dati. Al primo avvio il vecchio `analysis/runtime-profile/` viene
+copiato nel percorso stabile senza eliminarlo. Il profilo stabile già presente
+ha precedenza; non vengono uniti profili diversi automaticamente.
+
+Il setup predefinito e `--update` conservano i controlli di licenza del produttore.
+Per la rimozione locale dei limiti di due schede/workspace sulla **830**, usare
+esplicitamente `--update --workspace-limits` dopo aver chiuso TableCraft:
+procedura, ambito e verifica sono descritti in [installazione](docs/setup.md#schede-e-workspace-sulla-build-830).
+Su un altro Mac le funzioni Premium richiedono l'attivazione prevista dalla
+propria licenza; il repository non la fornisce. Password nel Portachiavi e file
+SQLite/chiavi SSH esterni richiedono una migrazione separata.
 
 Opzioni di ricerca, modalità offline e fixture SQL: [docs/setup.md](docs/setup.md).
 

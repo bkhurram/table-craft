@@ -1,12 +1,17 @@
 """Locate embedded feature messages and their ARM64 code references."""
+import argparse
 import json
 import re
 from pathlib import Path
 from capstone import Cs, CS_ARCH_ARM64, CS_MODE_ARM
 from macho_inspect import MachO
 
-app = MachO('/Applications/TablePlus.app/Contents/MacOS/TablePlus')
-out = Path('analysis/evidence/feature-controls')
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--binary', default='/Applications/TablePlus.app/Contents/MacOS/TablePlus')
+parser.add_argument('--output', default='analysis/evidence/feature-controls')
+args = parser.parse_args()
+app = MachO(args.binary)
+out = Path(args.output)
 out.mkdir(parents=True, exist_ok=True)
 messages = [b'Free Trial limited 2 workspaces', b'Free Trial limited 2 tabs',
             b'Free Trial limited 2 filters', b'Free Trial limited 1 Metrics Board',

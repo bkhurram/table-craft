@@ -125,12 +125,21 @@ class Nib:
         return changes
 
 
+def branding_nibs(bundle):
+    """830 removed the standalone AboutWindow; Welcome remains mandatory."""
+    info = plistlib.loads((bundle/'Contents/Info.plist').read_bytes())
+    if (info.get('CFBundleShortVersionString'), str(info.get('CFBundleVersion'))) == ('27.1.0', '830'):
+        return tuple(name for name in BRANDING_NIBS
+                     if name != 'AboutWindow.nib' or (bundle/'Contents/Resources'/name).exists())
+    return BRANDING_NIBS
+
+
 def validate_source(bundle):
     """Check resource compatibility without writing to the source application."""
     resources = bundle / 'Contents/Resources'
     if not (resources/'AppIcon.icns').is_file():
         raise ValueError('AppIcon.icns is missing')
-    for relative in BRANDING_NIBS:
+    for relative in branding_nibs(bundle):
         source = (resources/relative).read_bytes()
         try:
             nib = Nib(source)
@@ -162,7 +171,7 @@ def backup(path):
 
 def main():
     changes = {}
-    for relative in BRANDING_NIBS:
+    for relative in branding_nibs(BUNDLE):
         path = RESOURCES / relative
         source = path.read_bytes()
         nib = Nib(source)
