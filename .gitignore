@@ -35,3 +35,8 @@ __pycache__/
 dist/
 build/
 *.log
+
+# Embedded proprietary runtime for local/portable use
+/runtime/
+/.tablecraft-runtime-*/
+/.tablecraft-keychain-*/

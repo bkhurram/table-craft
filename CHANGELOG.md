@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-20 — Portachiavi TableCraft
+
+- Servizio delle password generiche `com.tablecraft.TableCraft` ed etichetta `TableCraft`.
+- Lunghezze Swift corrette e verifica delle slice ARM64/Intel prima della firma.
+- Aggiornamento del runtime con backup, senza lettura o migrazione delle credenziali TablePlus.
+
+
+## 2026-10-20 — Runtime incorporato
+
+- Runtime completo locale e ZIP portabile senza dipendenza da TablePlus installato.
+- Conservazione e verifica degli override esistenti di schede, finestre, filtri, logo e UI trial.
+- Inventario SHA-256, verifica firma e protezione dalla sostituzione involontaria del runtime.
+
+
 ## Unreleased
 
 - `--filter-limits` sulla build ARM64 830 elimina il limite di due filtri per

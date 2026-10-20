@@ -2,6 +2,7 @@
 set -euo pipefail
 task_root=${0:A:h:h}
 source_app=/Applications/TablePlus.app
+explicit_source=0
 check_only=0
 local_controls=0
 workspace_limits=0
@@ -18,7 +19,7 @@ while (( $# )); do
         --filter-limits) filter_limits=1; workspace_limits=1; shift ;;
         --source)
             (( $# >= 2 )) || { print -u2 'Missing path after --source'; exit 2; }
-            source_app=$2; shift 2 ;;
+            source_app=$2; explicit_source=1; shift 2 ;;
         -h|--help)
             print 'Usage: scripts/setup_tablecraft.sh [--check] [--update] [--local-controls | --workspace-limits] [--hide-trial-ui] [--filter-limits] [--source /path/TablePlus.app]'
             exit 0 ;;
@@ -37,6 +38,15 @@ fi
 source "$task_root/scripts/python_runtime.sh"
 tablecraft_select_python
 print "Using Python: $TABLECRAFT_PYTHON ($("$TABLECRAFT_PYTHON" --version 2>&1))"
+if (( ! explicit_source )) && [[ -e "$task_root/runtime" || -L "$task_root/runtime" ]]; then
+    if (( update || local_controls || workspace_limits || hide_trial_ui || filter_limits )); then
+        print -u2 'An embedded runtime already preserves its overrides. To rebuild from an original application, select it explicitly with --source; the embedded runtime will remain unchanged.'
+        exit 2
+    fi
+    "$TABLECRAFT_PYTHON" "$task_root/scripts/portable_runtime.py" verify
+    print 'Embedded TableCraft runtime verified. No installed TablePlus application is required.'
+    exit 0
+fi
 for tool in codesign ditto plutil; do
     command -v "$tool" >/dev/null || { print -u2 "Missing tool: $tool"; exit 1; }
 done

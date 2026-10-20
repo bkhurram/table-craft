@@ -4,10 +4,13 @@ task_root=${0:A:h}
 research_bundle="$task_root/analysis/copies/TablePlus-Research.app"
 source "$task_root/scripts/python_runtime.sh"
 tablecraft_select_python
+if [[ -e "$task_root/runtime" || -L "$task_root/runtime" ]]; then
+    research_bundle=$("$TABLECRAFT_PYTHON" "$task_root/scripts/portable_runtime.py" verify)
+fi
 research_profile=$("$TABLECRAFT_PYTHON" "$task_root/scripts/profile_manager.py" prepare)
 export TABLECRAFT_PROFILE="$research_profile"
 if [[ ! -x "$research_bundle/Contents/MacOS/TablePlus" ]]; then
-    print 'First launch: preparing TableCraft from /Applications/TablePlus.app…'
+    print 'First launch: no embedded runtime found; preparing TableCraft from /Applications/TablePlus.app…'
     /bin/zsh "$task_root/scripts/setup_tablecraft.sh" || {
         print -u2 'Setup failed. Resolve the requirement shown above, then open this launcher again.'
         exit 1

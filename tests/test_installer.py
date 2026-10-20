@@ -84,6 +84,29 @@ class InstallerTests(unittest.TestCase):
                                '--source', str(self.source), *args], env=self.env,
                               text=True, capture_output=True)
 
+    def test_embedded_preflight_does_not_require_original_application(self):
+        (self.root/'runtime').mkdir()
+        (self.root/'scripts/portable_runtime.py').write_text(
+            'import sys\nassert sys.argv[1:] == ["verify"]\nprint("verified embedded runtime")\n')
+        shutil.rmtree(self.source)
+        result = subprocess.run(['/bin/zsh', str(self.root/'scripts/setup_tablecraft.sh'), '--check'],
+                                env=self.env, text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('No installed TablePlus application is required', result.stdout)
+        self.assertFalse((self.root/'analysis').exists())
+
+    def test_embedded_runtime_blocks_implicit_update_and_fails_closed(self):
+        (self.root/'runtime').mkdir()
+        (self.root/'scripts/portable_runtime.py').write_text('raise SystemExit(17)\n')
+        command = ['/bin/zsh', str(self.root/'scripts/setup_tablecraft.sh')]
+        failed = subprocess.run(command+['--check'], env=self.env, capture_output=True)
+        self.assertEqual(failed.returncode, 17)
+        for option in ('--update', '--filter-limits', '--hide-trial-ui', '--workspace-limits'):
+            result = subprocess.run(command+[option], env=self.env, text=True, capture_output=True)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn('embedded runtime already preserves', result.stderr)
+        self.assertFalse((self.root/'analysis').exists())
+
     def test_check_only_does_not_create_copy(self):
         result = self.run_setup('--check')
         self.assertEqual(result.returncode, 0, result.stderr)

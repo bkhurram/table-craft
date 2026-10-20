@@ -1,5 +1,5 @@
 TableCraft contains local customization and analysis tools for a separately
-installed copy of TablePlus. It is not the source code of TablePlus.
+installed or locally embedded copy of TablePlus. It is not the source code of TablePlus.
 
 The repository's MIT license covers its original code and documentation. It
 does not license the TablePlus application, its executable code, frameworks,
@@ -15,3 +15,7 @@ collage is included in the public assets. TableCraft is independently maintained
 
 The elephant illustration was generated with OpenAI ImageGen for this project.
 See docs/branding.md for provenance and the included asset list.
+
+A locally generated runtime/ directory and portable ZIP may contain the complete
+customized vendor application. These local artifacts retain the vendor license
+and are excluded from the public source repository.

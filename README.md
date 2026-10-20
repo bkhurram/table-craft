@@ -33,7 +33,9 @@
 
 TableCraft raccoglie gli script per creare e personalizzare una copia locale di
 TablePlus: icona, schermata iniziale, nome dell'app, menu e profilo dei dati.
-Il motore database e l'interfaccia nativa provengono dall'app installata separatamente.
+Il motore database e l'interfaccia nativa provengono dal bundle TablePlus.
+Il progetto locale può incorporare la copia personalizzata completa in `runtime/`,
+senza dipendere dall'app installata: vedi [runtime portabile](docs/portable-runtime.md).
 
 Questo repository contiene il codice degli strumenti e gli asset originali del
 progetto. Il sorgente di TablePlus, i suoi binari e i profili utente non sono
@@ -43,6 +45,7 @@ inclusi. Non è disponibile una build autonoma da compilare dal solo repository.
 
 - **Identità Craft:** elefante inciso nero/avorio su fondo corallo, icona macOS e logo interno coordinati.
 - **Interfaccia personalizzata:** nome TableCraft nella schermata iniziale, nei menu e nella finestra Informazioni.
+- **Portachiavi del runtime incorporato:** servizio `com.tablecraft.TableCraft` ed etichetta `TableCraft`; le vecchie password richiedono reimportazione o reinserimento. [Dettagli](docs/keychain-isolation.md).
 - **Profilo separato:** connessioni e impostazioni in `~/Library/Application Support/TableCraft/runtime-profile/`, indipendenti dalla cartella del progetto.
 - **Workspace SQL:** query, schede, tabelle, filtri e Metrics Board dell'app di base.
 - **Analisi riproducibile:** inventario del bundle, dipendenze, metadati, hash e disassemblaggio LLDB.
@@ -73,7 +76,10 @@ eseguibile preciso; non attestano lo sblocco di ogni funzione Premium.
 
 ## Installazione
 
-Occorre avere TablePlus installato separatamente in `/Applications/TablePlus.app`.
+**Con il runtime incorporato o lo ZIP portabile**, apri `Avvia TableCraft.command`: non serve TablePlus installato.
+Per verificare o esportare il pacchetto completo, consulta [runtime portabile](docs/portable-runtime.md).
+
+**In un clone dei soli sorgenti senza `runtime/`**, occorre avere TablePlus installato separatamente in `/Applications/TablePlus.app`.
 Il setup predefinito verifica le risorse necessarie per nome e icona anche su
 altre build. Il vincolo di versione e hash esatti riguarda `--local-controls`.
 Non scarica l'applicazione. La build 802 non è stata provata end-to-end qui.
@@ -134,6 +140,7 @@ Opzioni di ricerca, modalità offline e fixture SQL: [docs/setup.md](docs/setup.
 | `scripts/` | Setup, branding, icone, analisi e verifica dei file pubblicabili |
 | `assets/icons/` | PNG, ICNS e provenienza dell'illustrazione originale |
 | `docs/` | Installazione, architettura, demo e pubblicazione |
+| `runtime/` | Bundle completo incorporato e manifest di integrità; locale, escluso da Git |
 | `analysis/` | Bundle locale, profili, backup ed evidenze; esclusi da Git |
 
 La CI verifica sintassi, collegamenti locali e contenuto tracciato. Non compila

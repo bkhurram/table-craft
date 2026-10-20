@@ -32,7 +32,10 @@ chiamate a `sqlite3_prepare_v2`, `sqlite3_step` e `sqlite3_finalize`.
 
 ## Personalizzazione
 
-Il setup copia il bundle installato e assegna un identificatore distinto.
+Il launcher preferisce il bundle incorporato in `runtime/`, verificato tramite
+inventario SHA-256 e firma. Il pacchetto portabile include tutti i framework e
+conserva gli override senza ricostruirli; vedi [runtime](portable-runtime.md).
+In assenza del runtime, il setup copia il bundle installato e assegna un identificatore distinto.
 `rebrand_tablecraft.py` modifica risorse e testi visibili; gli oggetti stringa
 NIB condivisi con `IBModuleName` sono duplicati per conservare i nomi Swift.
 L'icona viene convertita in ICNS con gli strumenti nativi di macOS.
@@ -55,3 +58,11 @@ fanno parte del contenuto Git.
 Riferimento metodologico: [awesome-reverse-engineering](https://github.com/morluto/awesome-reverse-engineering),
 commit `29449628ed591065973ab8919a6df51ba254da82`. La raccolta iniziale ha usato
 LLDB e gli strumenti nativi Apple; non una decompilazione completa in Ghidra.
+
+## Portachiavi
+
+Il runtime incorporato usa `com.tablecraft.TableCraft` per le password generiche
+e l'etichetta `TableCraft`. La modifica aggiorna gli inizializzatori Swift in
+entrambe le architetture. Non migra le voci TablePlus esistenti; i servizi
+specifici MCP/TLS rimangono distinti. Vedi la
+[verifica della separazione](keychain-isolation.md) per evidenze e limiti.

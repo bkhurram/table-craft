@@ -12,11 +12,18 @@ Local TablePlus customization with Craft branding, a separate profile and reprod
 
 ![Synthetic SQLite data with three combined filters](docs/images/sqlite-filters.png)
 
+The local project can now embed the complete customized runtime in `runtime/`.
+Launch with `Avvia TableCraft.command` without installing TablePlus. Run
+`python3 scripts/portable_runtime.py package` to export a complete portable ZIP.
+The GitHub source archive still excludes vendor binaries. See the
+[portable runtime guide (Italian)](docs/portable-runtime.md).
+
 ## What this repository provides
 
 TableCraft contains scripts that customize a separately installed copy of
 TablePlus: application name, welcome screen, menus, elephant icon and profile.
-The database engine and native interface come from the installed application.
+The database engine and native interface come from the complete TablePlus bundle,
+either embedded locally or copied from an installed application.
 
 The TablePlus application, its source code, vendor resources and user profiles
 are not distributed here. This repository does not build a standalone database
@@ -51,7 +58,8 @@ is unlocked. The default setup applies branding; research control changes are op
 
 ## Get started
 
-Install TablePlus separately at `/Applications/TablePlus.app`,
+With an embedded runtime or the portable ZIP, launch `Avvia TableCraft.command` directly.
+For a source-only checkout without `runtime/`, install TablePlus separately at `/Applications/TablePlus.app`,
 then download or clone this repository and run:
 
 ```sh

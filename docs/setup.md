@@ -1,5 +1,9 @@
 # Installazione e uso locale
 
+Con `runtime/` incorporato o con lo ZIP portabile, TablePlus installato non è
+richiesto: aprire `Avvia TableCraft.command`. Vedi [runtime portabile](portable-runtime.md).
+I requisiti dell'app originale qui sotto riguardano il setup dai soli sorgenti.
+
 ## Requisiti
 
 - Mac Apple Silicon, avviato nativamente in ARM64.
