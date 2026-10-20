@@ -166,6 +166,45 @@ in `analysis/evidence/limits-830/`. Queste prove non certificano gli altri
 adattatori database. Un successivo `--update` senza `--workspace-limits`
 ripristina i controlli originali; altre build vengono rifiutate prima di copiare.
 
+### Nascondere gli avvisi trial sulla 830
+
+Per rimuovere dall'interfaccia il messaggio trial e i pulsanti Purchase/Activate
+della schermata iniziale, oltre alla scheda trial nel pannello Notifications:
+
+```sh
+./scripts/setup_tablecraft.sh --update --hide-trial-ui
+```
+
+Chiudere prima TableCraft. L'opzione include `--workspace-limits` per conservare
+la rimozione dei limiti già applicata e richiede lo stesso campione ARM64 830.
+Alle otto modifiche delle schede/workspace aggiunge cinque modifiche di
+presentazione: tre argomenti `setHidden(true)` e due rami per omettere la notifica
+trial. Gli outlet e le altre notifiche vengono conservati; lo stato licenza
+non viene alterato. Manifest locale: `analysis/evidence/trial-ui-830/`.
+
+Verifica del 20 ottobre 2026: schermata iniziale senza i tre elementi indicati e
+pannello Notifications con “No notifications”. Un aggiornamento senza questa
+opzione ripristina la presentazione originale.
+
+### Filtri oltre il limite di due sulla 830
+
+Chiudere TableCraft, quindi eseguire:
+
+```sh
+./scripts/setup_tablecraft.sh --update --filter-limits --hide-trial-ui
+```
+
+`--filter-limits` include le modifiche a schede e workspace. Aggiungere
+`--hide-trial-ui` conserva anche la rimozione degli avvisi trial. Sono richiesti
+versione e hash ARM64 830 indicati sopra. Quattro rami aggiuntivi riguardano
+creazione, ripristino e avviso secondario dei filtri; il motore delle query e
+lo stato licenza restano invariati. Manifest in `analysis/evidence/filters-830/`.
+Il setup conserva app precedente e backup del profilo.
+
+Verificati tre filtri Raw SQL simultanei su SQLite sintetico: categoria kitchen,
+prezzo maggiore di zero e quantità maggiore di zero, con due righe risultanti.
+Dopo il riavvio i tre filtri sono stati ripristinati e riapplicati con lo stesso risultato.
+
 ### Campione storico 818
 
 Il setup predefinito applica nome e grafica. Per includere le modifiche ai

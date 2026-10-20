@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- `--filter-limits` sulla build ARM64 830 elimina il limite di due filtri per
+  creazione e ripristino, con verifica su tre filtri SQLite simultanei.
+
+- `--hide-trial-ui` sulla build ARM64 830 rimuove gli avvisi trial dalla schermata
+  iniziale e dalle notifiche, conservando le modifiche a schede/workspace e lo stato licenza.
+
 - Compatibilità del branding con TablePlus 27.1.0 (830), senza richiedere AboutWindow.nib assente in questa build; supporto 27.0.2 (818) conservato.
 - Profilo stabile fuori dal checkout, migrazione conservativa delle connessioni e override `TABLECRAFT_PROFILE`.
 - `--update` con backup del profilo, conservazione dell'app precedente e blocco se la copia è aperta.

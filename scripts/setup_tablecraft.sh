@@ -5,6 +5,8 @@ source_app=/Applications/TablePlus.app
 check_only=0
 local_controls=0
 workspace_limits=0
+hide_trial_ui=0
+filter_limits=0
 update=0
 while (( $# )); do
     case "$1" in
@@ -12,11 +14,13 @@ while (( $# )); do
         --check) check_only=1; shift ;;
         --local-controls) local_controls=1; shift ;;
         --workspace-limits) workspace_limits=1; shift ;;
+        --hide-trial-ui) hide_trial_ui=1; workspace_limits=1; shift ;;
+        --filter-limits) filter_limits=1; workspace_limits=1; shift ;;
         --source)
             (( $# >= 2 )) || { print -u2 'Missing path after --source'; exit 2; }
             source_app=$2; shift 2 ;;
         -h|--help)
-            print 'Usage: scripts/setup_tablecraft.sh [--check] [--update] [--local-controls | --workspace-limits] [--source /path/TablePlus.app]'
+            print 'Usage: scripts/setup_tablecraft.sh [--check] [--update] [--local-controls | --workspace-limits] [--hide-trial-ui] [--filter-limits] [--source /path/TablePlus.app]'
             exit 0 ;;
         *) print -u2 "Unknown option: $1"; exit 2 ;;
     esac
@@ -144,7 +148,10 @@ if (( local_controls )); then
     "$TABLECRAFT_PYTHON" "$task_root/scripts/prepare_research_copy.py"
 fi
 if (( workspace_limits )); then
-    "$TABLECRAFT_PYTHON" "$task_root/scripts/patch_workspace_limits.py"
+    patch_options=()
+    (( ! hide_trial_ui )) || patch_options+=(--hide-trial-ui)
+    (( ! filter_limits )) || patch_options+=(--filter-limits)
+    "$TABLECRAFT_PYTHON" "$task_root/scripts/patch_workspace_limits.py" "${patch_options[@]}"
 fi
 "$TABLECRAFT_PYTHON" - "$TABLECRAFT_BUNDLE" <<'PY'
 import plistlib, sys

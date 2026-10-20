@@ -114,6 +114,18 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertFalse((self.root/'analysis').exists())
 
+    def test_hide_trial_ui_keeps_workspace_version_guard(self):
+        result = self.run_setup('--hide-trial-ui', '--check')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('requires exactly TablePlus 27.1.0 (830)', result.stderr)
+        self.assertFalse((self.root/'analysis').exists())
+
+    def test_filter_limits_keep_version_guard_before_update(self):
+        result = self.run_setup('--filter-limits', '--hide-trial-ui', '--update', '--check')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('requires exactly TablePlus 27.1.0 (830)', result.stderr)
+        self.assertFalse((self.root/'analysis').exists())
+
     def test_failure_cleans_staging_and_allows_retry_without_touching_profile(self):
         profile = self.root/'analysis/runtime-profile/keep.txt'
         profile.parent.mkdir(parents=True)
