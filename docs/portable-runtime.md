@@ -103,3 +103,96 @@ carica il runtime su GitHub.
 Questa prova verifica il caricamento del runtime rilocato; non ripete le prove
 GUI di query, schede e filtri documentate per il bundle originale. L'inventario
 conferma che bundle incorporato e bundle personalizzato hanno lo stesso contenuto.
+
+## Percorso MCP
+
+L'eseguibile MCP del runtime è `runtime/TableCraft.app/Contents/MacOS/tablecraft-mcp`.
+Per aggiornare un runtime incorporato precedente:
+
+```sh
+python3 scripts/portable_runtime.py rename-mcp
+```
+
+Il comando conserva un backup, aggiorna firma e manifest, e mantiene
+`tableplus-mcp` come collegamento relativo per i riferimenti interni dell'app.
+Le nuove incorporazioni usano già il nuovo nome. Nella configurazione del
+client MCP, impostare il comando sul percorso assoluto di `tablecraft-mcp`.
+
+Per aggiornare anche percorsi copiabili, etichette e testi delle impostazioni MCP
+del campione supportato:
+
+```sh
+python3 scripts/portable_runtime.py brand-mcp-settings
+```
+
+La modifica aggiorna le stringhe e le rispettive lunghezze Swift nelle slice ARM64
+e Intel, conserva un backup e rinnova firma e inventario. Non cambia protocolli,
+permessi o la variabile di autenticazione `TABLEPLUS_MCP_ACCESS_TOKEN`. Riavviare
+TableCraft per caricare i nuovi testi.
+
+## Nome della registrazione MCP
+
+Il nome passato ai client durante l'aggiunta automatica è `TableCraft`.
+La rinomina dell'eseguibile non basta: il build 830 conserva il nome del server
+in stringhe Swift separate, usate dalla configurazione MCP e dalle operazioni
+di aggiunta, verifica e rimozione.
+
+```sh
+python3 scripts/portable_runtime.py brand-mcp-registration
+```
+
+Il comando supporta il runtime già aggiornato da `brand-mcp-settings`, verifica
+SHA-256 e byte originali di entrambe le architetture, conserva un backup e
+aggiorna firma e manifest. Le copie già corrette vengono riconosciute senza
+modifiche. Riavviare TableCraft dopo l'aggiornamento.
+
+Verifica del 21 ottobre 2026: 45 test superati; nuova registrazione eseguita dal
+pulsante “Add to Codex” dopo la rimozione della sola voce MCP. L'app ha ricreato
+`mcp_servers.TableCraft` con il comando `tablecraft-mcp`; la configurazione
+risultante coincide con quella salvata prima della prova. Entrambi gli ZIP sono
+stati estratti e verificati rispetto al runtime, con firma e override validi.
+
+## Isolamento di porta, discovery e token MCP
+
+```sh
+python3 scripts/portable_runtime.py isolate-mcp
+```
+
+Per il runtime 830 già aggiornato con i comandi precedenti, questa operazione:
+
+- Imposta `51013` come porta preferita predefinita di TableCraft; se occupata,
+  l'allocatore conserva il comportamento di selezione di una porta libera.
+- Limita il discovery del client nativo a `com.tinyapp.TablePlus.Research`,
+  l'identificatore esistente e separato del bundle TableCraft. Non usa più i
+  file di discovery di TablePlus o della versione Setapp.
+- Separa il servizio portachiavi dei token MCP in `com.tablecraft.mcp.tokens`.
+  Il servizio delle password delle connessioni resta `com.tablecraft.TableCraft`.
+- Usa `tablecraft://integrations/start-mcp` per l'avvio automatico dell'app,
+  evitando il protocollo URL `tableplus://`.
+
+La generazione automatica del token deve restare attiva nelle impostazioni MCP.
+Il client `tablecraft-mcp` legge porta e token correnti dal file locale
+`~/Library/Application Support/com.tinyapp.TablePlus.Research/MCP/mcp-server.json`;
+questo file viene prodotto dall'app con permessi `0600` e non viene incluso negli
+ZIP. Non copiare il token nel repository o nella configurazione Codex.
+La variabile `TABLEPLUS_MCP_ACCESS_TOKEN` resta compatibile per la modalità
+manuale, quando si disattiva la generazione automatica.
+
+L'aggiornamento non migra né modifica i token MCP di TablePlus. Eventuali token
+manuali necessari a TableCraft devono essere creati nella sua nuova identità.
+Dopo la modifica riavviare TableCraft e i client MCP già in esecuzione.
+
+Verifica live del 21 ottobre 2026, con entrambe le app aperte:
+
+- TableCraft su `127.0.0.1:51013`, TablePlus su `127.0.0.1:51004`.
+- Richieste prive di token e token incrociati tra le due app rifiutati con HTTP
+  `401`; token automatico TableCraft accettato con HTTP `200`.
+- Il client nativo, avviato senza variabili per token manuali, completa
+  `initialize`, `tools/list` e la lettura dei metadati delle connessioni salvate.
+  La chiamata compare solo nell'audit di TableCraft. Nessun database viene aperto
+  e nessuna query viene eseguita.
+- Con `51013` occupata da un listener di test, TableCraft sceglie `51014` e il
+  client recupera automaticamente la nuova porta e il token corrente. Rimossa
+  l'occupazione e riavviata l'app, TableCraft torna a `51013`.
+- 49 test automatici superati. Entrambe le architetture sono verificate
+  staticamente; la prova live è eseguita su ARM64.

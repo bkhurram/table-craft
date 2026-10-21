@@ -80,6 +80,18 @@ def verify(runtime):
     if inventory(bundle) != manifest['entries']:
         raise ValueError('Runtime integrity mismatch; restore the complete portable runtime')
     signature(bundle)
+    if 'mcp_settings' in manifest:
+        from patch_mcp_settings import state
+        if state(bundle) != 'TableCraft':
+            raise ValueError('MCP settings branding mismatch')
+    if 'mcp_registration' in manifest:
+        from patch_mcp_registration import state as registration_state
+        if registration_state(bundle) != 'TableCraft':
+            raise ValueError('MCP registration branding mismatch')
+    if 'mcp_isolation' in manifest:
+        from patch_mcp_isolation import state as mcp_isolation_state
+        if mcp_isolation_state(bundle) != 'isolated':
+            raise ValueError('MCP isolation mismatch')
     if overrides(bundle) != manifest['overrides']:
         raise ValueError('Runtime override mismatch')
     return bundle
@@ -102,23 +114,184 @@ def embed(source, destination):
             raise ValueError('Source runtime changed while copying')
         from patch_keychain_identity import identity, patch, SERVICE, LABEL
         keychain = None
+        mcp_renamed = ensure_mcp_name(staged_bundle)
+        changed_keychain = False
         if identity(staged_bundle) == 'legacy':
             changes = patch(staged_bundle)
-            subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', '--options', 'runtime',
-                            '--preserve-metadata=entitlements', str(staged_bundle)], check=True)
+            changed_keychain = True
             keychain = dict(service=SERVICE, label=LABEL, migrated_credentials=False,
                             architectures=['arm64', 'x86_64'], changes=changes)
         elif (source.parent/'manifest.json').is_file():
             keychain = json.loads((source.parent/'manifest.json').read_text()).get('keychain')
+        if mcp_renamed or changed_keychain:
+            subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', '--options', 'runtime',
+                            '--preserve-metadata=entitlements', str(staged_bundle)], check=True)
         info = plistlib.loads((source/'Contents/Info.plist').read_bytes())
         manifest = dict(format=1, bundle='TableCraft.app', version=info['CFBundleShortVersionString'],
                         build=info['CFBundleVersion'], overrides=overrides(staged_bundle), entries=inventory(staged_bundle))
+        from patch_mcp_registration import state as registration_state
+        if registration_state(staged_bundle) == 'TableCraft':
+            manifest['mcp_registration'] = dict(name='TableCraft')
+        from patch_mcp_isolation import state as mcp_isolation_state, BUNDLE_ID, TOKEN_SERVICE, DEFAULT_PORT
+        if mcp_isolation_state(staged_bundle) == 'isolated':
+            manifest['mcp_isolation'] = dict(bundle_id=BUNDLE_ID, token_service=TOKEN_SERVICE, default_port=DEFAULT_PORT)
+        manifest['mcp_executable'] = 'Contents/MacOS/tablecraft-mcp'
         if keychain:
             manifest['keychain'] = keychain
+        from patch_mcp_settings import state as mcp_settings_state
+        if mcp_settings_state(staged_bundle) == 'TableCraft':
+            manifest['mcp_settings'] = dict(branding='TableCraft', helper='tablecraft-mcp')
         (stage/'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n')
         verify(stage)
         stage.rename(destination)
     return destination
+
+
+def ensure_mcp_name(bundle):
+    directory = Path(bundle)/'Contents/MacOS'
+    previous, current = directory/'tableplus-mcp', directory/'tablecraft-mcp'
+    if current.exists() or current.is_symlink():
+        if (current.is_file() and not current.is_symlink() and os.access(current, os.X_OK)
+                and previous.is_symlink() and os.readlink(previous) == 'tablecraft-mcp'):
+            return False
+        raise ValueError('Unexpected MCP executable or compatibility link; no replacement made')
+    if not previous.is_file() or previous.is_symlink() or not os.access(previous, os.X_OK):
+        raise ValueError('Expected a runnable original MCP helper')
+    previous.rename(current)
+    previous.symlink_to(current.name)
+    return True
+
+
+def rename_mcp(runtime):
+    runtime = Path(runtime).resolve()
+    bundle = verify(runtime)
+    if (bundle/'Contents/MacOS/tablecraft-mcp').exists():
+        ensure_mcp_name(bundle)
+        return runtime
+    with tempfile.TemporaryDirectory(prefix='.tablecraft-mcp-', dir=runtime.parent) as temp:
+        stage = Path(temp)/'runtime'
+        subprocess.run(['/usr/bin/ditto', str(runtime), str(stage)], check=True)
+        staged_bundle = stage/'TableCraft.app'
+        ensure_mcp_name(staged_bundle)
+        subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', '--options', 'runtime',
+                        '--preserve-metadata=entitlements', str(staged_bundle)], check=True)
+        manifest = json.loads((stage/'manifest.json').read_text())
+        manifest['entries'] = inventory(staged_bundle)
+        from patch_mcp_registration import state as registration_state
+        if registration_state(staged_bundle) == 'TableCraft':
+            manifest['mcp_registration'] = dict(name='TableCraft')
+        from patch_mcp_isolation import state as mcp_isolation_state, BUNDLE_ID, TOKEN_SERVICE, DEFAULT_PORT
+        if mcp_isolation_state(staged_bundle) == 'isolated':
+            manifest['mcp_isolation'] = dict(bundle_id=BUNDLE_ID, token_service=TOKEN_SERVICE, default_port=DEFAULT_PORT)
+        manifest['mcp_executable'] = 'Contents/MacOS/tablecraft-mcp'
+        (stage/'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n')
+        verify(stage)
+        backup_root = ROOT/'analysis/runtime-backups'
+        backup_root.mkdir(parents=True, exist_ok=True)
+        backup = Path(tempfile.mkdtemp(prefix='before-mcp-path-', dir=backup_root))/'runtime'
+        runtime.rename(backup)
+        try:
+            stage.rename(runtime)
+        except BaseException:
+            backup.rename(runtime)
+            raise
+        print('Previous runtime preserved at: '+str(backup))
+    return runtime
+
+
+def brand_mcp_settings(runtime):
+    from patch_mcp_settings import state, patch
+    runtime = Path(runtime).resolve()
+    bundle = verify(runtime)
+    if state(bundle) == 'TableCraft':
+        return runtime
+    with tempfile.TemporaryDirectory(prefix='.tablecraft-mcp-settings-', dir=runtime.parent) as temp:
+        stage = Path(temp)/'runtime'
+        subprocess.run(['/usr/bin/ditto', str(runtime), str(stage)], check=True)
+        staged_bundle = stage/'TableCraft.app'
+        changes = patch(staged_bundle)
+        subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', '--options', 'runtime',
+                        '--preserve-metadata=entitlements', str(staged_bundle)], check=True)
+        manifest = json.loads((stage/'manifest.json').read_text())
+        manifest['entries'] = inventory(staged_bundle)
+        manifest['mcp_settings'] = dict(branding='TableCraft', helper='tablecraft-mcp', changes=changes)
+        (stage/'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n')
+        verify(stage)
+        backup_root = ROOT/'analysis/runtime-backups'
+        backup_root.mkdir(parents=True, exist_ok=True)
+        backup = Path(tempfile.mkdtemp(prefix='before-mcp-settings-', dir=backup_root))/'runtime'
+        runtime.rename(backup)
+        try:
+            stage.rename(runtime)
+        except BaseException:
+            backup.rename(runtime)
+            raise
+        print('Previous runtime preserved at: '+str(backup))
+    return runtime
+
+
+def brand_mcp_registration(runtime):
+    from patch_mcp_registration import state, patch
+    runtime = Path(runtime).resolve()
+    bundle = verify(runtime)
+    if state(bundle) == 'TableCraft':
+        return runtime
+    with tempfile.TemporaryDirectory(prefix='.tablecraft-mcp-registration-', dir=runtime.parent) as temp:
+        stage = Path(temp)/'runtime'
+        subprocess.run(['/usr/bin/ditto', str(runtime), str(stage)], check=True)
+        staged_bundle = stage/'TableCraft.app'
+        changes = patch(staged_bundle)
+        subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', '--options', 'runtime',
+                        '--preserve-metadata=entitlements', str(staged_bundle)], check=True)
+        manifest = json.loads((stage/'manifest.json').read_text())
+        manifest['entries'] = inventory(staged_bundle)
+        manifest['mcp_registration'] = dict(name='TableCraft', changes=changes)
+        (stage/'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n')
+        verify(stage)
+        backup_root = ROOT/'analysis/runtime-backups'
+        backup_root.mkdir(parents=True, exist_ok=True)
+        backup = Path(tempfile.mkdtemp(prefix='before-mcp-registration-', dir=backup_root))/'runtime'
+        runtime.rename(backup)
+        try:
+            stage.rename(runtime)
+        except BaseException:
+            backup.rename(runtime)
+            raise
+        print('Previous runtime preserved at: '+str(backup))
+    return runtime
+
+
+def isolate_mcp(runtime):
+    from patch_mcp_isolation import state, patch, BUNDLE_ID, TOKEN_SERVICE, DEFAULT_PORT
+    runtime = Path(runtime).resolve()
+    bundle = verify(runtime)
+    if state(bundle) == 'isolated':
+        return runtime
+    with tempfile.TemporaryDirectory(prefix='.tablecraft-mcp-isolation-', dir=runtime.parent) as temp:
+        stage = Path(temp)/'runtime'
+        subprocess.run(['/usr/bin/ditto', str(runtime), str(stage)], check=True)
+        staged_bundle = stage/'TableCraft.app'
+        changes = patch(staged_bundle)
+        subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', '--options', 'runtime',
+                        '--preserve-metadata=entitlements', str(staged_bundle/'Contents/MacOS/tablecraft-mcp')], check=True)
+        subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', '--options', 'runtime',
+                        '--preserve-metadata=entitlements', str(staged_bundle)], check=True)
+        manifest = json.loads((stage/'manifest.json').read_text())
+        manifest['entries'] = inventory(staged_bundle)
+        manifest['mcp_isolation'] = dict(bundle_id=BUNDLE_ID, token_service=TOKEN_SERVICE, default_port=DEFAULT_PORT, changes=changes)
+        (stage/'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n')
+        verify(stage)
+        backup_root = ROOT/'analysis/runtime-backups'
+        backup_root.mkdir(parents=True, exist_ok=True)
+        backup = Path(tempfile.mkdtemp(prefix='before-mcp-isolation-', dir=backup_root))/'runtime'
+        runtime.rename(backup)
+        try:
+            stage.rename(runtime)
+        except BaseException:
+            backup.rename(runtime)
+            raise
+        print('Previous runtime preserved at: '+str(backup))
+    return runtime
 
 
 def isolate_keychain(runtime):
@@ -187,7 +360,7 @@ def package(output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('embed', 'verify', 'package', 'isolate-keychain'))
+    parser.add_argument('action', choices=('embed', 'verify', 'package', 'isolate-keychain', 'rename-mcp', 'brand-mcp-settings', 'brand-mcp-registration', 'isolate-mcp'))
     parser.add_argument('--source', type=Path, default=ROOT/'analysis/copies/TablePlus-Research.app')
     parser.add_argument('--runtime', type=Path, default=ROOT/'runtime')
     parser.add_argument('--output', type=Path, default=ROOT/'dist/TableCraft-portable-macos-arm64.zip')
@@ -195,6 +368,14 @@ def main():
     try:
         if args.action == 'embed':
             print(embed(args.source, args.runtime))
+        elif args.action == 'isolate-mcp':
+            print(isolate_mcp(args.runtime))
+        elif args.action == 'brand-mcp-registration':
+            print(brand_mcp_registration(args.runtime))
+        elif args.action == 'brand-mcp-settings':
+            print(brand_mcp_settings(args.runtime))
+        elif args.action == 'rename-mcp':
+            print(rename_mcp(args.runtime))
         elif args.action == 'isolate-keychain':
             print(isolate_keychain(args.runtime))
         elif args.action == 'verify':

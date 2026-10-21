@@ -14,14 +14,14 @@ il sorgente del motore o dell'interfaccia TablePlus.
 
 ## Livelli osservati
 
-| Livello | Evidenza statica |
-|---|---|
-| UI | AppKit, Swift/Objective-C, risorse NIB e localizzazioni |
-| Contratti comuni | SQL.framework, SQLProtocol, SQLConnectionProtocol, QueryParams e risultati condivisi |
-| Backend | Framework separati per SQLite, PostgreSQL, MySQL, MariaDB, Redis, Mongo e altri motori |
-| Trasporto | Framework SSH separati e client HTTP |
-| Estensioni | Componenti plugin, AI e MCP; eseguibile separato tableplus-mcp |
-| Supporto | Sparkle, Sentry, componenti grafici e librerie Swift accessorie |
+| Livello          | Evidenza statica                                                                              |
+|------------------|-----------------------------------------------------------------------------------------------|
+| UI               | AppKit, Swift/Objective-C, risorse NIB e localizzazioni                                       |
+| Contratti comuni | SQL.framework, SQLProtocol, SQLConnectionProtocol, QueryParams e risultati condivisi          |
+| Backend          | Framework separati per SQLite, PostgreSQL, MySQL, MariaDB, Redis, Mongo e altri motori        |
+| Trasporto        | Framework SSH separati e client HTTP                                                          |
+| Estensioni       | Componenti plugin, AI e MCP; eseguibile separato tablecraft-mcp (alias interno tableplus-mcp) |
+| Supporto         | Sparkle, Sentry, componenti grafici e librerie Swift accessorie                               |
 
 Sono stati inventariati due eseguibili principali e 27 framework. La presenza
 di una dipendenza o di un endpoint nelle stringhe non dimostra l'uso a runtime
@@ -66,3 +66,9 @@ e l'etichetta `TableCraft`. La modifica aggiorna gli inizializzatori Swift in
 entrambe le architetture. Non migra le voci TablePlus esistenti; i servizi
 specifici MCP/TLS rimangono distinti. Vedi la
 [verifica della separazione](keychain-isolation.md) per evidenze e limiti.
+
+Il discovery MCP di TableCraft è limitato al suo bundle separato; il client
+legge porta e token automatico dal relativo file locale `MCP/mcp-server.json`.
+La porta predefinita è `51013`, con selezione alternativa se occupata; il servizio
+portachiavi dei token MCP è `com.tablecraft.mcp.tokens`. La separazione include
+anche lo schema di avvio `tablecraft://`; vedere [runtime](portable-runtime.md).

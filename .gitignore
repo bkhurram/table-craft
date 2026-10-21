@@ -40,3 +40,4 @@ build/
 /runtime/
 /.tablecraft-runtime-*/
 /.tablecraft-keychain-*/
+/.tablecraft-mcp-*/
