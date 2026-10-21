@@ -62,17 +62,17 @@ eseguibile preciso; non attestano lo sblocco di ogni funzione Premium.
 
 ## Compatibilità
 
-| Componente | Stato |
-|---|---|
-| macOS su Apple Silicon, ARM64 | Verificato su macOS **27.0.1**, build **26A434** |
-| Versione TablePlus | **27.0.2 (818)** e **27.1.0 (830)**: setup compatibile; avvio, profilo e SQLite verificati sulla 830. Vedi [rapporto](docs/compatibility.md) |
-| Modifiche ai controlli locali | **818**: campione storico; **830**: schede e workspace con `--workspace-limits`; SHA-256 esatto richiesto |
-| macOS 12 e successivi | Minimo dichiarato dal bundle di base; le altre versioni non sono state provate |
-| Mac Intel / Rosetta | Slice presente nell'app originale; modifiche ai controlli locali e runtime non verificati |
-| Windows, Linux e web | Nessuna implementazione in questo repository |
-| Database | SQLite verificato; gli altri adattatori del bundle non sono stati provati end-to-end |
-| AI, MCP e servizi online | Componenti individuati; integrazioni e autorizzazioni lato server non verificate |
-| Strumenti | Python **3.9+**, zsh e strumenti macOS di copia/firma; strumenti sviluppatore Apple per l'analisi opzionale |
+| Componente                    | Stato                                                                                                                                        |
+|-------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| macOS su Apple Silicon, ARM64 | Verificato su macOS **27.0.1**, build **26A434**                                                                                             |
+| Versione TablePlus            | **27.0.2 (818)** e **27.1.0 (830)**: setup compatibile; avvio, profilo e SQLite verificati sulla 830. Vedi [rapporto](docs/compatibility.md) |
+| Modifiche ai controlli locali | **818**: campione storico; **830**: schede e workspace con `--workspace-limits`; SHA-256 esatto richiesto                                    |
+| macOS 12 e successivi         | Minimo dichiarato dal bundle di base; le altre versioni non sono state provate                                                               |
+| Mac Intel / Rosetta           | Slice presente nell'app originale; modifiche ai controlli locali e runtime non verificati                                                    |
+| Windows, Linux e web          | Nessuna implementazione in questo repository                                                                                                 |
+| Database                      | SQLite verificato; gli altri adattatori del bundle non sono stati provati end-to-end                                                         |
+| AI, MCP e servizi online      | Componenti individuati; integrazioni e autorizzazioni lato server non verificate                                                             |
+| Strumenti                     | Python **3.9+**, zsh e strumenti macOS di copia/firma; strumenti sviluppatore Apple per l'analisi opzionale                                  |
 
 ## Installazione
 
@@ -135,13 +135,48 @@ Opzioni di ricerca, modalità offline e fixture SQL: [docs/setup.md](docs/setup.
 
 ## Come è organizzato
 
-| Percorso | Contenuto |
-|---|---|
-| `scripts/` | Setup, branding, icone, analisi e verifica dei file pubblicabili |
-| `assets/icons/` | PNG, ICNS e provenienza dell'illustrazione originale |
-| `docs/` | Installazione, architettura, demo e pubblicazione |
-| `runtime/` | Bundle completo incorporato e manifest di integrità; locale, escluso da Git |
-| `analysis/` | Bundle locale, profili, backup ed evidenze; esclusi da Git |
+### Comandi rapidi
+
+Con `make help` puoi vedere tutti i comandi disponibili:
+
+```sh
+make test          # Tutti i test automatici
+make check         # Sintassi, indice pubblico Git, whitespace e test
+make preflight     # Controlla i requisiti o il runtime incorporato
+make build         # Prepara la copia locale tramite il setup standard
+make run           # Avvia TableCraft
+make run-offline   # Avvia con rete disabilitata
+make verify        # Verifica il runtime incorporato
+make package       # Genera lo ZIP portabile e il checksum
+make profile-backup
+make clean         # Rimuove solo le cache Python degli strumenti e dei test
+```
+
+`make build` usa il setup esistente: richiede TablePlus installato oppure il
+runtime incorporato, che viene verificato se presente. Per creare il runtime
+da una copia personalizzata già pronta, usare `make embed`. `make package`
+richiede `runtime/` e non sovrascrive uno ZIP già esistente.
+
+Puoi personalizzare i percorsi e selezionare i test, per esempio:
+
+```sh
+make test TEST_PATTERN=test_installer.py
+make check PYTHON=python3
+make update SETUP_ARGS='--source "/Applications/TablePlus.app"'
+make package OUTPUT=dist/TableCraft-nuovo.zip
+```
+
+Chiudere TableCraft prima di `make update`. Le variabili `TABLECRAFT_PROFILE`
+e `TABLECRAFT_PYTHON` restano disponibili per gli script di setup e avvio;
+`PYTHON` seleziona l'interprete dei comandi Python eseguiti dal Makefile.
+
+| Percorso        | Contenuto                                                                   |
+|-----------------|-----------------------------------------------------------------------------|
+| `scripts/`      | Setup, branding, icone, analisi e verifica dei file pubblicabili            |
+| `assets/icons/` | PNG, ICNS e provenienza dell'illustrazione originale                        |
+| `docs/`         | Installazione, architettura, demo e pubblicazione                           |
+| `runtime/`      | Bundle completo incorporato e manifest di integrità; locale, escluso da Git |
+| `analysis/`     | Bundle locale, profili, backup ed evidenze; esclusi da Git                  |
 
 La CI verifica sintassi, collegamenti locali e contenuto tracciato. Non compila
 TablePlus e non certifica il funzionamento completo dell'app.

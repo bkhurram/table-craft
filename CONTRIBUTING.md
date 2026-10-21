@@ -6,6 +6,20 @@ dell'app sorgente e usare dati sintetici per le prove.
 
 ## Verifiche locali
 
+Il Makefile raccoglie i comandi di sviluppo (`make help` mostra l'elenco).
+Per eseguire tutti i controlli e i test:
+
+```sh
+make check
+make test TEST_PATTERN=test_installer.py
+```
+
+`make check-public` legge l'indice Git: aggiungere esplicitamente i file da
+pubblicare prima di usarlo per verificare nuove modifiche. `make clean` elimina
+solo le cache Python in `scripts/` e `tests/`.
+
+Gli stessi controlli si possono eseguire direttamente:
+
 ```sh
 python3 -m compileall -q scripts tests
 python3 -m unittest discover -s tests -v
