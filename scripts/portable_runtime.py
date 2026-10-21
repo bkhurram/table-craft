@@ -346,7 +346,8 @@ def package(output):
                 if source.is_file() and source.suffix in suffixes and source.name not in {'reference-craft.png', 'macos-resolved-icon.png'}:
                     shutil.copy2(source, target/source.name)
         shutil.copytree(ROOT/'docs/images', stage/'docs/images')
-        for name in ('Avvia TableCraft.command', 'README.md', 'README.en.md', 'NOTICE', 'LICENSE', 'CONTRIBUTING.md', 'CHANGELOG.md', 'requirements-analysis.txt'):
+        shutil.copytree(ROOT/'tests', stage/'tests', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+        for name in ('Makefile', 'Avvia TableCraft.command', 'README.md', 'README.en.md', 'NOTICE', 'LICENSE', 'CONTRIBUTING.md', 'CHANGELOG.md', 'requirements-analysis.txt'):
             shutil.copy2(ROOT/name, stage/name)
         subprocess.run(['/usr/bin/ditto', str(ROOT/'runtime'), str(stage/'runtime')], check=True)
         verify(stage/'runtime')
@@ -363,7 +364,7 @@ def main():
     parser.add_argument('action', choices=('embed', 'verify', 'package', 'isolate-keychain', 'rename-mcp', 'brand-mcp-settings', 'brand-mcp-registration', 'isolate-mcp'))
     parser.add_argument('--source', type=Path, default=ROOT/'analysis/copies/TablePlus-Research.app')
     parser.add_argument('--runtime', type=Path, default=ROOT/'runtime')
-    parser.add_argument('--output', type=Path, default=ROOT/'dist/TableCraft-portable-macos-arm64.zip')
+    parser.add_argument('--output', type=Path, default=ROOT/'dist/TableCraft-macos-arm64.zip')
     args = parser.parse_args()
     try:
         if args.action == 'embed':

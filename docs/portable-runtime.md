@@ -11,6 +11,49 @@ fornisce riferimenti agli strumenti di analisi; non è un decompilatore eseguibi
 L'integrazione conserva il codice nativo esistente: non produce il sorgente di
 TablePlus né una sua implementazione indipendente compilabile.
 
+## Da un repository pulito
+
+Il repository include `runtime-seed/manifest.json` e tutte le parti
+`runtime.zip.partNNN` (massimo 48 MiB ciascuna). Sono file Git normali: non
+servono Git LFS, TablePlus installato o download da servizi esterni.
+Su macOS Apple Silicon, con Python 3.9+ e Command Line Tools Apple:
+
+```sh
+make check-seed
+make package
+```
+
+`make package` verifica un runtime esistente oppure ricompone il seed, verifica
+i checksum, estrae in una cartella temporanea e controlla inventario, override e
+firma prima di pubblicare `runtime/`. Poi genera
+`dist/TableCraft-macos-arm64.zip` e `.sha256`. Per un percorso diverso:
+
+```sh
+make package OUTPUT=dist/TableCraft-altro.zip
+```
+
+Il ripristino conserva link relativi e permessi. Un runtime presente ma alterato
+interrompe il comando e non viene sostituito. Un output ZIP già presente viene
+rifiutato. `make bootstrap` ripristina senza esportare. `make clean` conserva
+seed, runtime, ZIP e profili. Prevedere almeno 2 GB liberi per ripristino e packaging.
+
+## Aggiornare il seed incluso
+
+Chiudere l’app, preparare e verificare il nuovo `runtime/`, conservare il vecchio
+`runtime-seed/` fuori dal percorso e poi eseguire:
+
+```sh
+make verify
+make seed
+make check-seed
+```
+
+Versionare insieme il manifest e tutte le parti, eliminando dall’indice le parti
+precedenti non più presenti. Provare `make package` in una copia senza `runtime/`,
+`analysis/`, `dist/` o ambienti Python locali. `make seed` rifiuta di sovrascrivere
+il seed esistente. Il seed comprende solo bundle e manifest, senza profili o token.
+Non nasce dal solo branding: mantiene il campione completo già personalizzato.
+
 ## Avvio
 
 ```sh
@@ -64,7 +107,7 @@ una firma di provenienza del distributore.
 python3 scripts/portable_runtime.py package
 ```
 
-Produce `dist/TableCraft-portable-macos-arm64.zip` e un file `.sha256`. Lo ZIP
+Produce `dist/TableCraft-macos-arm64.zip` e un file `.sha256`. Lo ZIP
 contiene una cartella `TableCraft-portable` con launcher, script, asset,
 documentazione e runtime. Estrarla e aprire `Avvia TableCraft.command`.
 Il contenuto viene verificato anche dopo la copia nella cartella di packaging.
@@ -83,9 +126,9 @@ spostare prima `runtime/` in un backup e ripetere `embed` con una copia verifica
 
 ## Repository e distribuzione
 
-`runtime/`, `analysis/` e `dist/` restano esclusi da Git. Il checkout locale e lo
-ZIP portabile includono il runtime; un clone o lo ZIP sorgenti di GitHub non lo
-contengono. Il codice degli strumenti resta MIT; i binari TablePlus conservano
+`runtime/`, `analysis/` e `dist/` restano generati e locali. Il repository e
+lo ZIP sorgenti di GitHub includono invece `runtime-seed/`, che contiene tutti
+i byte necessari per ricostruire il runtime senza dipendenze locali nascoste. Il codice degli strumenti resta MIT; i binari TablePlus conservano
 la propria licenza e non diventano MIT. Questo comando non pubblica file né
 carica il runtime su GitHub.
 
@@ -196,3 +239,12 @@ Verifica live del 21 ottobre 2026, con entrambe le app aperte:
   l'occupazione e riavviata l'app, TableCraft torna a `51013`.
 - 49 test automatici superati. Entrambe le architetture sono verificate
   staticamente; la prova live è eseguita su ARM64.
+
+## Verifica da checkout pulito del 21 ottobre 2026
+
+55 test automatici superati. Preparata una copia contenente soltanto i file
+del repository e il nuovo seed, senza `runtime/`, `analysis/`, `dist/` o ambienti
+Python locali. `make check-public check-seed package` ha ripristinato il runtime
+e generato lo ZIP; dopo l’estrazione sono passati checksum SHA-256,
+`make verify` e `make build`. Nello ZIP sono inclusi anche Makefile e test.
+La prova verifica packaging e integrità; non ripete le prove GUI del database.

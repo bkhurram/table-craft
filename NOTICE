@@ -4,7 +4,8 @@ installed or locally embedded copy of TablePlus. It is not the source code of Ta
 The repository's MIT license covers its original code and documentation. It
 does not license the TablePlus application, its executable code, frameworks,
 compiled interface resources, vendor artwork, or user connection profiles.
-Those materials are not included in the public repository.
+The customized vendor runtime is included in runtime-seed/ as archive parts.
+User connection profiles and TablePlus source code are not included.
 
 TablePlus is a product of TablePlus Inc. Existing vendor author and copyright
 credits in locally customized copies are retained.
@@ -18,4 +19,4 @@ See docs/branding.md for provenance and the included asset list.
 
 A locally generated runtime/ directory and portable ZIP may contain the complete
 customized vendor application. These local artifacts retain the vendor license
-and are excluded from the public source repository.
+and are reconstructed from the runtime-seed/ parts included in this repository.

@@ -22,7 +22,6 @@ ConnectionGroups.plist*
 /assets/icons/reference-craft.png
 /assets/icons/macos-resolved-icon.png
 /assets/icons/branding*.json
-/Avvia TablePlus Research.command
 
 # Development and OS files
 .venv*/
@@ -36,8 +35,9 @@ dist/
 build/
 *.log
 
-# Embedded proprietary runtime for local/portable use
+# Expanded runtime is restored from the tracked runtime-seed/ archive parts.
 /runtime/
+/.tablecraft-seed-*/
 /.tablecraft-runtime-*/
 /.tablecraft-keychain-*/
 /.tablecraft-mcp-*/

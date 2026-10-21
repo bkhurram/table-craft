@@ -8,7 +8,7 @@ TEST_PATTERN ?= test_*.py
 SOURCE_APP ?= /Applications/TablePlus.app
 EMBED_SOURCE ?= analysis/copies/TablePlus-Research.app
 RUNTIME ?= runtime
-OUTPUT ?= dist/TableCraft-portable-macos-arm64.zip
+OUTPUT ?= dist/TableCraft-macos-arm64.zip
 ANALYSIS_OUTPUT ?= analysis/evidence
 # Opzioni facoltative passate agli script esistenti, ad esempio --source o --offline.
 SETUP_ARGS ?=
@@ -17,7 +17,7 @@ RUN_ARGS ?=
 .PHONY: help test check lint syntax check-public check-diff preflight build setup update \
 	run run-offline embed verify package profile-path profile-backup analyze \
 	venv deps-analysis clean isolate-keychain rename-mcp brand-mcp-settings \
-	brand-mcp-registration isolate-mcp
+	brand-mcp-registration isolate-mcp bootstrap runtime-ready seed check-seed
 
 help: ## Mostra i comandi disponibili (predefinito)
 	@printf 'TableCraft — comandi disponibili\n\n'
@@ -45,7 +45,18 @@ check-diff: ## Verifica whitespace nelle modifiche locali e staged
 preflight: ## Verifica i requisiti o il runtime incorporato senza creare l'app
 	./scripts/setup_tablecraft.sh --check $(SETUP_ARGS)
 
-build: setup ## Prepara l'app locale; richiede TablePlus oppure un runtime esistente
+build: runtime-ready ## Ripristina e verifica l'app completa inclusa nel repository
+
+bootstrap: runtime-ready ## Prepara un clone pulito senza TablePlus installato
+
+runtime-ready: ## Ripristina il runtime dal seed se assente, altrimenti lo verifica
+	"$(PYTHON)" scripts/runtime_seed.py restore
+
+seed: ## Crea runtime-seed/ dal runtime verificato; rifiuta sovrascritture
+	"$(PYTHON)" scripts/runtime_seed.py create
+
+check-seed: ## Verifica checksum e completezza delle parti incluse nel repository
+	"$(PYTHON)" scripts/runtime_seed.py check
 
 setup: ## Esegue il setup standard; opzioni aggiuntive tramite SETUP_ARGS
 	./scripts/setup_tablecraft.sh $(SETUP_ARGS)
@@ -62,10 +73,10 @@ run-offline: ## Avvia TableCraft con rete disabilitata dalla sandbox
 embed: ## Incorpora la copia personalizzata EMBED_SOURCE in RUNTIME
 	"$(PYTHON)" scripts/portable_runtime.py embed --source "$(EMBED_SOURCE)" --runtime "$(RUNTIME)"
 
-verify: ## Verifica integrita, firma e personalizzazioni del runtime
+verify: ## Verifica integrita, firma e personalizzazioni del runtime selezionato
 	"$(PYTHON)" scripts/portable_runtime.py verify --runtime "$(RUNTIME)"
 
-package: ## Esporta runtime/ in uno ZIP con checksum; OUTPUT deve essere nuovo
+package: runtime-ready ## Ripristina il runtime ed esporta lo ZIP con checksum
 	"$(PYTHON)" scripts/portable_runtime.py package --output "$(OUTPUT)"
 
 profile-path: ## Mostra il percorso del profilo, anche con TABLECRAFT_PROFILE

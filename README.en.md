@@ -15,7 +15,11 @@ Local TablePlus customization with Craft branding, a separate profile and reprod
 The local project can now embed the complete customized runtime in `runtime/`.
 Launch with `Avvia TableCraft.command` without installing TablePlus. Run
 `python3 scripts/portable_runtime.py package` to export a complete portable ZIP.
-The GitHub source archive still excludes vendor binaries. See the
+The repository includes the complete runtime in `runtime-seed/`, split into
+48 MiB parts with checksums. A clean clone needs no installed TablePlus or Git LFS.
+Run `make package` on Apple Silicon macOS with Python 3.9+ and Apple Command Line
+Tools to restore it and produce `dist/TableCraft-macos-arm64.zip` and its SHA-256.
+Use `make bootstrap` to restore only, then `make run` to launch. See the
 [portable runtime guide (Italian)](docs/portable-runtime.md).
 
 ## What this repository provides
@@ -25,8 +29,8 @@ TablePlus: application name, welcome screen, menus, elephant icon and profile.
 The database engine and native interface come from the complete TablePlus bundle,
 either embedded locally or copied from an installed application.
 
-The TablePlus application, its source code, vendor resources and user profiles
-are not distributed here. This repository does not build a standalone database
+The customized TablePlus runtime is included as archive parts under its vendor
+license. TablePlus source code and user profiles are not included. This repository does not build a standalone database
 client from source.
 
 ## Features
@@ -69,8 +73,7 @@ then download or clone this repository and run:
 ```
 
 You can also open `Avvia TableCraft.command` directly: on first launch it runs
-setup automatically, provided the requirements above are installed. The GitHub
-ZIP does not include the prepared application.
+setup automatically, provided the requirements above are installed. The GitHub source ZIP includes the archived runtime seed.
 
 Default setup checks branding resources across builds. Exact source version and
 hash are required for `--local-controls`. Build 802 has not been tested end-to-end here.
@@ -85,7 +88,8 @@ SQLite demo. There is no prebuilt application download in this repository.
 
 Public files include scripts, original branding assets, documentation and demo
 screenshots. The `analysis/` folder, local app, profiles and raw evidence stay
-outside Git. CI checks syntax, local documentation links and the indexed file set;
+outside Git; the complete runtime seed stays tracked. CI checks its checksums,
+syntax, local documentation links and the indexed file set;
 it does not build or fully test TablePlus.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md), [publishing notes](docs/publishing.md)

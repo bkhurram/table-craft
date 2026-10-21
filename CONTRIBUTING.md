@@ -37,6 +37,9 @@ titoli e comportamento interessato sulla copia locale. Non modificare
 l'installazione originale durante le prove. Non dichiarare supporto per una
 piattaforma o funzione senza una verifica corrispondente.
 
-Non includere app, framework, risorse vendor, connessioni, credenziali o report
-grezzi. Issue e pull request devono contenere solo errori redatti e screenshot
+Il runtime previsto è incluso soltanto nelle parti verificate di `runtime-seed/`.
+Per aggiornarlo, verificare `runtime/`, spostare il vecchio seed in un backup
+locale e usare `make seed`, poi provare ripristino e packaging in un clone pulito.
+Aggiungere tutte le nuove parti e il manifest allo stesso commit.
+Non includere altri bundle, connessioni, credenziali o report grezzi. Issue e pull request devono contenere solo errori redatti e screenshot
 sintetici. La CI non sostituisce la revisione manuale delle immagini.

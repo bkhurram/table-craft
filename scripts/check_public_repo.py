@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Check the Git index for local data, vendor binaries and broken local docs links."""
+"""Check the Git index for private data, runtime seed integrity and local links."""
+import hashlib
+import json
 import posixpath
 import re
 import subprocess
@@ -14,6 +16,23 @@ def main():
     if not names:
         raise SystemExit('No tracked files. Stage the intended public files before checking.')
     errors = []
+    seed_parts = {}
+    seed_manifest = 'runtime-seed/manifest.json'
+    if seed_manifest in names:
+        try:
+            manifest = json.loads(subprocess.check_output(['git', 'show', ':'+seed_manifest]))
+            if manifest['format'] != 1 or not manifest['parts']:
+                raise ValueError('Unsupported manifest')
+            for index, part in enumerate(manifest['parts']):
+                if part['name'] != 'runtime.zip.part{:03d}'.format(index) or not 0 < part['size'] <= 48*1024*1024:
+                    raise ValueError('Invalid part')
+                seed_parts['runtime-seed/'+part['name']] = part
+            if {name for name in names if name.startswith('runtime-seed/')} != {seed_manifest, *seed_parts}:
+                raise ValueError('Missing or unexpected seed files')
+        except (ValueError, KeyError, TypeError, subprocess.CalledProcessError):
+            errors.append('runtime-seed/: invalid or incomplete indexed seed')
+    else:
+        errors.append('runtime-seed/manifest.json: required for clean-clone packaging')
     forbidden_suffixes = ('.sqlite','.sqlite-wal','.sqlite-shm','.db','.nib','.car',
                           '.dmg','.pkg','.pem','.key','.tableplusconnection')
     secret_patterns = [
@@ -36,6 +55,11 @@ def main():
                 or path.name == '.env' or path.name.startswith('.env.')):
             errors.append(f'{name}: private, generated or vendor file must not be tracked')
         blob = subprocess.check_output(['git','show',':'+name])
+        if name in seed_parts:
+            part = seed_parts[name]
+            if len(blob) != part['size'] or hashlib.sha256(blob).hexdigest() != part['sha256']:
+                errors.append(f'{name}: runtime seed checksum mismatch')
+            continue
         if len(blob) > 10*1024*1024:
             errors.append(f'{name}: exceeds the public asset size limit')
         if path.suffix in binary_extensions:

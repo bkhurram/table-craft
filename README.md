@@ -34,12 +34,14 @@
 TableCraft raccoglie gli script per creare e personalizzare una copia locale di
 TablePlus: icona, schermata iniziale, nome dell'app, menu e profilo dei dati.
 Il motore database e l'interfaccia nativa provengono dal bundle TablePlus.
-Il progetto locale può incorporare la copia personalizzata completa in `runtime/`,
-senza dipendere dall'app installata: vedi [runtime portabile](docs/portable-runtime.md).
+Il repository include la copia personalizzata completa in `runtime-seed/`.
+`make bootstrap` la ripristina in `runtime/` senza dipendere da un’app installata:
+vedi [runtime portabile](docs/portable-runtime.md).
 
-Questo repository contiene il codice degli strumenti e gli asset originali del
-progetto. Il sorgente di TablePlus, i suoi binari e i profili utente non sono
-inclusi. Non è disponibile una build autonoma da compilare dal solo repository.
+Il repository contiene strumenti, asset originali e un archivio del runtime
+personalizzato. I binari TablePlus mantengono la licenza del produttore; il loro
+sorgente e i profili utente non sono inclusi. La build ripristina il bundle
+esistente e non compila TablePlus da sorgente.
 
 ## Funzionalità
 
@@ -76,6 +78,25 @@ eseguibile preciso; non attestano lo sblocco di ogni funzione Premium.
 
 ## Installazione
 
+### Da un clone pulito
+
+Su macOS Apple Silicon servono Python 3.9+ e `make` (Command Line Tools Apple).
+Il seed completo è incluso nel repository, senza Git LFS o download aggiuntivi.
+
+```sh
+make check-seed
+make package
+```
+
+Il comando ripristina automaticamente il runtime e genera
+`dist/TableCraft-macos-arm64.zip` con checksum `.sha256`. Non serve TablePlus
+installato. Per preparare soltanto l’app: `make bootstrap`; per avviarla: `make run`.
+Il file di output non deve già esistere; usa `OUTPUT=dist/altro-nome.zip`
+per una nuova esportazione. Il ripristino richiede circa 434 MB, oltre allo spazio
+per il seed, i file temporanei e lo ZIP finale.
+
+### Setup da una diversa installazione TablePlus
+
 **Con il runtime incorporato o lo ZIP portabile**, apri `Avvia TableCraft.command`: non serve TablePlus installato.
 Per verificare o esportare il pacchetto completo, consulta [runtime portabile](docs/portable-runtime.md).
 
@@ -105,7 +126,7 @@ Non scarica l'applicazione. La build 802 non è stata provata end-to-end qui.
 
 È possibile anche aprire direttamente `Avvia TableCraft.command`: al primo avvio
 esegue automaticamente il setup, se sono presenti i requisiti indicati sopra.
-Il file ZIP di GitHub non include l'applicazione preparata.
+Il file ZIP dei sorgenti di GitHub include il seed completo da ripristinare.
 
 Il setup conserva l'installazione originale e non sovrascrive una copia locale
 già esistente senza `--update`. La copia usa una firma ad hoc, distinta dalla firma Developer ID
@@ -143,7 +164,7 @@ Con `make help` puoi vedere tutti i comandi disponibili:
 make test          # Tutti i test automatici
 make check         # Sintassi, indice pubblico Git, whitespace e test
 make preflight     # Controlla i requisiti o il runtime incorporato
-make build         # Prepara la copia locale tramite il setup standard
+make build         # Ripristina e verifica il runtime dal seed incluso
 make run           # Avvia TableCraft
 make run-offline   # Avvia con rete disabilitata
 make verify        # Verifica il runtime incorporato
@@ -152,10 +173,11 @@ make profile-backup
 make clean         # Rimuove solo le cache Python degli strumenti e dei test
 ```
 
-`make build` usa il setup esistente: richiede TablePlus installato oppure il
-runtime incorporato, che viene verificato se presente. Per creare il runtime
-da una copia personalizzata già pronta, usare `make embed`. `make package`
-richiede `runtime/` e non sovrascrive uno ZIP già esistente.
+`make build` e `make package` ripristinano il runtime dal seed incluso, se
+assente, e verificano il runtime già presente. `make setup` mantiene disponibile
+il setup da TablePlus installato. `make embed` è riservato a una copia già
+personalizzata con tutti gli override previsti; non è necessario per un clone
+pulito. `make package` non sovrascrive uno ZIP già esistente.
 
 Puoi personalizzare i percorsi e selezionare i test, per esempio:
 
@@ -175,7 +197,8 @@ e `TABLECRAFT_PYTHON` restano disponibili per gli script di setup e avvio;
 | `scripts/`      | Setup, branding, icone, analisi e verifica dei file pubblicabili            |
 | `assets/icons/` | PNG, ICNS e provenienza dell'illustrazione originale                        |
 | `docs/`         | Installazione, architettura, demo e pubblicazione                           |
-| `runtime/`      | Bundle completo incorporato e manifest di integrità; locale, escluso da Git |
+| `runtime/`      | Bundle espanso e manifest; ripristinati dal seed, esclusi da Git |
+| `runtime-seed/` | Archivio completo suddiviso in parti da 48 MiB e checksum; incluso in Git |
 | `analysis/`     | Bundle locale, profili, backup ed evidenze; esclusi da Git                  |
 
 La CI verifica sintassi, collegamenti locali e contenuto tracciato. Non compila

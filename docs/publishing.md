@@ -1,8 +1,9 @@
 # Preparare e pubblicare su GitHub
 
-Il repository pubblico deve contenere soltanto script originali, documentazione,
-icona generata e schermate con dati sintetici. Bundle, profili, backup, chiavi
-ed evidenze grezze restano locali. `.gitignore` esclude questi percorsi;
+Il repository contiene script, documentazione, asset originali e il runtime
+completo in `runtime-seed/`. Le parti binarie da 48 MiB restano sotto il limite
+per file di GitHub e non richiedono Git LFS. Il manifest con SHA-256 è obbligatorio.
+Il bundle espanso, i profili, i backup, le chiavi e le evidenze restano locali;
 `check_public_repo.py` verifica anche il contenuto effettivamente nell'indice Git.
 
 ## Controllo prima del commit
@@ -51,7 +52,8 @@ Il lavoro di preparazione locale non effettua push e non crea release.
 
 ## Release
 
-La CI non carica bundle o profili e non produce installatori. Una release del
-repository può distribuire i sorgenti degli strumenti e gli asset originali;
-il setup richiede un'app installata separatamente. Non presentare il progetto
+La CI verifica le parti del seed e il ripristino su macOS, senza caricare profili.
+Un clone completo o lo ZIP sorgenti contiene il necessario per `make package`;
+non serve un’app installata separatamente. I binari del seed mantengono la
+licenza TablePlus, distinta dalla MIT degli strumenti. Non presentare il progetto
 come riscrittura indipendente o come parte della comunità ArtCraft.

@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "parts": [
+    {
+      "name": "runtime.zip.part000",
+      "size": 50331648,
+      "sha256": "2aa2125230a0847172983ca59a09f23fb5214992f068dcfded7597e69d28222b"
+    },
+    {
+      "name": "runtime.zip.part001",
+      "size": 50331648,
+      "sha256": "f3c2a20239904257862d45f19c9883d103d4cbfa499b43e79cbb7c9409509fec"
+    },
+    {
+      "name": "runtime.zip.part002",
+      "size": 50331648,
+      "sha256": "7add0f1a236b88e20c36c42ba956f83dd72d77bc4e6f205ad5b9844aef78f895"
+    },
+    {
+      "name": "runtime.zip.part003",
+      "size": 13552374,
+      "sha256": "cc629acb3184a93aa24aee89ec0b6101330aa9ba56ace79842ad7d310a4ec96b"
+    }
+  ]
+}
